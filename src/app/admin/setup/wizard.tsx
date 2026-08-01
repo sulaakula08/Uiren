@@ -114,7 +114,7 @@ export function SetupWizard({
                     <input type="hidden" name="nameKk" value={nameKk} />
                     <button
                       type="submit"
-                      className="chip border border-[var(--color-line)] bg-white text-[var(--color-ink-2)] transition-colors hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
+                      className="chip border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-2)] transition-colors hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
                     >
                       + {name}
                     </button>
@@ -175,7 +175,7 @@ export function SetupWizard({
                             />
                             <button
                               type="submit"
-                              className="chip border border-[var(--color-line)] bg-white text-[var(--color-ink-2)] transition-colors hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
+                              className="chip border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-2)] transition-colors hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
                             >
                               + {name}
                             </button>

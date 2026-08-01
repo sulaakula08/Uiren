@@ -80,7 +80,7 @@ export function TutorChat({
 
   return (
     <div className="flex h-[calc(100vh-13rem)] flex-col gap-4">
-      <div className="flex-1 space-y-4 overflow-y-auto rounded-xl border bg-white p-5">
+      <div className="flex-1 space-y-4 overflow-y-auto rounded-xl border bg-[var(--color-surface)] p-5">
         {turns.length === 0 && (
           <div className="py-8 text-center">
             <p className="muted mb-4">
@@ -109,7 +109,7 @@ export function TutorChat({
             <div
               className={`max-w-[85%] rounded-xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                 turn.role === "user"
-                  ? "bg-[var(--color-brand)] text-white"
+                  ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
                   : "bg-[var(--color-canvas)]"
               }`}
             >

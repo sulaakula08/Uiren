@@ -120,7 +120,7 @@ export default async function AdminPage() {
         {users.length <= 1 ? (
           <Empty text="Пока в школе только вы. Отправьте код приглашения коллегам." />
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-[var(--color-line)] bg-white">
+          <div className="overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)]">
             <table className="w-full text-sm">
               <thead className="bg-[var(--color-canvas)] text-left">
                 <tr className="text-xs tracking-wide text-[var(--color-muted)] uppercase">

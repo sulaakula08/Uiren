@@ -7,12 +7,20 @@
   --color-line: #e7eaee;
   --color-line-2: #f0f2f5;
   --color-canvas: #f7f8fa;
+  /* Фон карточек и панелей. В тёмной теме перестаёт быть белым — поэтому
+     во всём интерфейсе используется эта переменная, а не утилита bg-white. */
+  --color-surface: #ffffff;
   --color-brand: #0e7c6b;
   --color-brand-dark: #0a6152;
   --color-brand-tint: #e6f5f2;
+  /* Текст поверх фирменного фона. В тёмной теме зелёный светлее, и белый
+     на нём даёт всего 2.9:1 — поэтому там текст, наоборот, тёмный. */
+  --color-on-brand: #ffffff;
   /* Тёмная полоса разбивает «белый лендинг» и даёт странице ритм. */
   --color-night: #0c1a1f;
-  --color-night-2: #16303a;
+  /* Цвет крупных цифр шагов. Держим не ниже 3:1 к --color-night: цифры
+     декоративные, но это всё же содержимое, и его должно быть видно. */
+  --color-night-2: #4c6f79;
   --color-night-ink: #e6eff0;
   --color-night-muted: #90a8ae;
   --color-warn: #b54708;
@@ -25,6 +33,65 @@
 
   --shadow-soft: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
   --shadow-lift: 0 2px 4px rgb(16 24 40 / 0.04), 0 8px 20px rgb(16 24 40 / 0.08);
+}
+
+/*
+ * Тёмная тема.
+ *
+ * Все цвета интерфейса заданы переменными, поэтому тему достаточно переопределить
+ * в одном месте. `data-theme` ставится на <html> на сервере из cookie — значит,
+ * страница сразу приходит в нужной теме и белой вспышки при загрузке нет.
+ * Значение `system` отдаёт решение системной настройке пользователя.
+ */
+@layer base {
+  :root[data-theme="dark"] {
+    --color-ink: #e9f1f2;
+    --color-ink-2: #bdcdd2;
+    --color-muted: #8698a0;
+    --color-line: #23343b;
+    --color-line-2: #1a272c;
+    --color-canvas: #0d1519;
+    --color-surface: #131f24;
+    /* Фирменный зелёный на тёмном фоне светлее — иначе не хватает контраста. */
+    --color-brand: #34a894;
+    --color-brand-dark: #46bda8;
+    --color-brand-tint: #10312c;
+    --color-on-brand: #05201b;
+    --color-warn: #f0a868;
+    --color-warn-tint: #2e2113;
+    --color-danger: #f38b80;
+    --color-danger-tint: #33191a;
+
+    --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.28), 0 1px 3px rgb(0 0 0 / 0.22);
+    --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.28), 0 8px 20px rgb(0 0 0 / 0.34);
+
+    color-scheme: dark;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root[data-theme="system"] {
+      --color-ink: #e9f1f2;
+      --color-ink-2: #bdcdd2;
+      --color-muted: #8698a0;
+      --color-line: #23343b;
+      --color-line-2: #1a272c;
+      --color-canvas: #0d1519;
+      --color-surface: #131f24;
+      --color-brand: #34a894;
+      --color-brand-dark: #46bda8;
+      --color-brand-tint: #10312c;
+      --color-on-brand: #05201b;
+      --color-warn: #f0a868;
+      --color-warn-tint: #2e2113;
+      --color-danger: #f38b80;
+      --color-danger-tint: #33191a;
+
+      --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.28), 0 1px 3px rgb(0 0 0 / 0.22);
+      --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.28), 0 8px 20px rgb(0 0 0 / 0.34);
+
+      color-scheme: dark;
+    }
+  }
 }
 
 * {
@@ -223,12 +290,12 @@ body {
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-[var(--color-line)] bg-white p-5
+    @apply rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5
       shadow-[var(--shadow-soft)];
   }
 
   .card-link {
-    @apply rounded-2xl border border-[var(--color-line)] bg-white p-5
+    @apply rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5
       shadow-[var(--shadow-soft)] transition-all duration-150
       hover:-translate-y-0.5 hover:border-[var(--color-brand)]/30
       hover:shadow-[var(--shadow-lift)];
@@ -247,22 +314,23 @@ body {
   }
 
   .btn-primary {
-    @apply bg-[var(--color-brand)] text-white shadow-[var(--shadow-soft)]
+    @apply bg-[var(--color-brand)] text-[var(--color-on-brand)]
+      shadow-[var(--shadow-soft)]
       hover:bg-[var(--color-brand-dark)];
   }
 
   .btn-ghost {
-    @apply border border-[var(--color-line)] bg-white text-[var(--color-ink-2)]
+    @apply border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-2)]
       hover:border-[var(--color-line)] hover:bg-[var(--color-canvas)];
   }
 
   .btn-danger {
-    @apply border border-[var(--color-line)] bg-white text-[var(--color-danger)]
+    @apply border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-danger)]
       hover:bg-[var(--color-danger-tint)];
   }
 
   .input {
-    @apply w-full rounded-xl border border-[var(--color-line)] bg-white px-3.5
+    @apply w-full rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] px-3.5
       py-2.5 text-sm text-[var(--color-ink)] outline-none transition-all
       duration-150 placeholder:text-[var(--color-muted)]
       focus:border-[var(--color-brand)] focus:ring-4
@@ -334,7 +402,7 @@ body {
 
   /* Стеклянная панель для макета продукта на первом экране. */
   .surface {
-    @apply rounded-2xl border border-[var(--color-line)] bg-white/80 backdrop-blur-sm;
+    @apply rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)]/80 backdrop-blur-sm;
   }
 
   .badge-soft {

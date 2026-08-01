@@ -22,7 +22,7 @@ function Toggle({
       className={`chip border transition-all duration-150 ${
         checked
           ? "border-[var(--color-brand)] bg-[var(--color-brand-tint)] text-[var(--color-brand)]"
-          : "border-[var(--color-line)] bg-white text-[var(--color-ink-2)] hover:border-[var(--color-brand)]/40"
+          : "border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-2)] hover:border-[var(--color-brand)]/40"
       }`}
     >
       {item.name}

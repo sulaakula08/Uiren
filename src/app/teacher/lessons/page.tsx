@@ -51,7 +51,7 @@ export default async function LessonsPage() {
       />
 
       {subjects.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[var(--color-line)] bg-white px-6 py-10 text-center">
+        <div className="rounded-2xl border border-dashed border-[var(--color-line)] bg-[var(--color-surface)] px-6 py-10 text-center">
           <p className="font-medium">Сначала укажите, что вы преподаёте</p>
           <Link href="/teacher/setup" className="btn-primary mt-4">
             Указать предметы и классы

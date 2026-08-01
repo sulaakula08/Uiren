@@ -15,7 +15,7 @@ export function LandingPreview() {
   return (
     <div className="surface animate-float overflow-hidden shadow-[var(--shadow-lift)]">
       {/* Шапка окна */}
-      <div className="flex items-center gap-2 border-b border-[var(--color-line)] bg-white/70 px-4 py-3">
+      <div className="flex items-center gap-2 border-b border-[var(--color-line)] bg-[var(--color-surface)]/70 px-4 py-3">
         <span className="size-2.5 rounded-full bg-[var(--color-line)]" />
         <span className="size-2.5 rounded-full bg-[var(--color-line)]" />
         <span className="size-2.5 rounded-full bg-[var(--color-line)]" />

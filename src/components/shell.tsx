@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { logout } from "@/app/actions";
 import type { SessionPayload } from "@/lib/session";
 import type { Locale, MessageKey, Translator } from "@/lib/i18n";
+import { DEFAULT_THEME, THEME_COOKIE, isTheme } from "@/lib/theme";
 import { tourFor } from "@/lib/tour-steps";
 import { LocaleSwitcher } from "./locale-switcher";
-import { IconLogout } from "./icons";
+import { ThemeSwitcher } from "./theme-switcher";
+import { IconLogout, IconSettings } from "./icons";
 import { NavLinks, type NavItem } from "./nav-links";
 import { Tour, TourButton } from "./tour";
 
@@ -16,7 +19,7 @@ function initials(name: string) {
     .join("");
 }
 
-export function Shell({
+export async function Shell({
   session,
   t,
   locale,
@@ -32,11 +35,14 @@ export function Shell({
   tourDone: boolean;
   children: React.ReactNode;
 }) {
+  const cookieTheme = (await cookies()).get(THEME_COOKIE)?.value;
+  const theme = isTheme(cookieTheme) ? cookieTheme : DEFAULT_THEME;
+
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[248px_1fr]">
-      <aside className="flex flex-col gap-6 border-b border-[var(--color-line)] bg-white p-4 lg:sticky lg:top-0 lg:h-screen lg:border-r lg:border-b-0">
+      <aside className="flex flex-col gap-6 border-b border-[var(--color-line)] bg-[var(--color-surface)] p-4 lg:sticky lg:top-0 lg:h-screen lg:border-r lg:border-b-0">
         <Link href="/" className="flex items-center gap-2.5 px-1">
-          <div className="grid size-9 place-items-center rounded-xl bg-[var(--color-brand)] text-sm font-semibold text-white">
+          <div className="grid size-9 place-items-center rounded-xl bg-[var(--color-brand)] text-sm font-semibold text-[var(--color-on-brand)]">
             U
           </div>
           <span className="text-[15px] font-semibold tracking-tight">
@@ -47,17 +53,23 @@ export function Shell({
         <NavLinks items={nav} />
 
         <div className="mt-auto hidden space-y-3 lg:block">
-          <div className="flex items-center gap-2.5 rounded-xl bg-[var(--color-canvas)] px-3 py-2.5">
-            <div className="grid size-8 shrink-0 place-items-center rounded-full bg-white text-xs font-semibold text-[var(--color-ink-2)]">
+          <Link
+            href="/settings"
+            className="flex items-center gap-2.5 rounded-xl bg-[var(--color-canvas)] px-3 py-2.5 transition-colors hover:bg-[var(--color-brand-tint)]"
+          >
+            <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[var(--color-surface)] text-xs font-semibold text-[var(--color-ink-2)]">
               {initials(session.fullName)}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{session.fullName}</p>
               <p className="text-xs text-[var(--color-muted)]">
                 {t(`role.${session.role}` as MessageKey)}
               </p>
             </div>
-          </div>
+            <IconSettings className="size-4 shrink-0 text-[var(--color-muted)]" />
+          </Link>
+
+          <ThemeSwitcher current={theme} locale={locale} />
 
           <div className="flex items-center gap-2">
             <TourButton label={t("tour.replay")} />
@@ -76,11 +88,17 @@ export function Shell({
       </aside>
 
       <div className="min-w-0">
-        <div className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] bg-white px-4 py-2.5 lg:hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2.5 lg:hidden">
           <span className="text-sm font-medium">{session.fullName}</span>
           <div className="flex items-center gap-2">
-            <TourButton label={t("tour.replay")} />
-            <LocaleSwitcher current={locale} />
+            <ThemeSwitcher current={theme} locale={locale} />
+            <Link
+              href="/settings"
+              className="btn-ghost px-2.5 py-2"
+              title="Настройки"
+            >
+              <IconSettings className="size-4" />
+            </Link>
             <form action={logout}>
               <button type="submit" className="btn-ghost px-3 py-2 text-xs">
                 {t("nav.logout")}

@@ -19,7 +19,7 @@ export default async function LoginPage() {
           href="/"
           className="mb-8 flex flex-col items-center text-center"
         >
-          <div className="grid size-12 place-items-center rounded-2xl bg-[var(--color-brand)] text-lg font-semibold text-white shadow-[var(--shadow-soft)]">
+          <div className="grid size-12 place-items-center rounded-2xl bg-[var(--color-brand)] text-lg font-semibold text-[var(--color-on-brand)] shadow-[var(--shadow-soft)]">
             U
           </div>
           <h1 className="mt-4 text-2xl font-semibold tracking-tight">

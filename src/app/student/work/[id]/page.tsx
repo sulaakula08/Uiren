@@ -61,7 +61,7 @@ export default async function StudentWorkPage({
           {assignment.maxScore} баллов
         </p>
         {assignment.description && (
-          <p className="mt-3 rounded-lg bg-white px-4 py-3 text-sm">
+          <p className="mt-3 rounded-lg bg-[var(--color-surface)] px-4 py-3 text-sm">
             {assignment.description}
           </p>
         )}

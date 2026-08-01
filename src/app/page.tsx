@@ -121,11 +121,11 @@ export default async function LandingPage() {
   if (session) redirect(HOME_BY_ROLE[session.role]);
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="sticky top-0 z-20 border-b border-[var(--color-line)] bg-white/80 backdrop-blur-md">
+    <div className="min-h-screen bg-[var(--color-surface)]">
+      <header className="sticky top-0 z-20 border-b border-[var(--color-line)] bg-[var(--color-surface)]/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-2.5">
-            <div className="grid size-8 place-items-center rounded-xl bg-[var(--color-brand)] text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition-transform duration-300 hover:scale-105">
+            <div className="grid size-8 place-items-center rounded-xl bg-[var(--color-brand)] text-sm font-semibold text-[var(--color-on-brand)] shadow-[var(--shadow-soft)] transition-transform duration-300 hover:scale-105">
               U
             </div>
             <span className="font-semibold tracking-tight">Uiren</span>
@@ -244,7 +244,7 @@ export default async function LandingPage() {
               {[...SUBJECTS, ...SUBJECTS].map((subject, i) => (
                 <span
                   key={`${subject}-${i}`}
-                  className="shrink-0 rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm whitespace-nowrap text-[var(--color-ink-2)]"
+                  className="shrink-0 rounded-full border border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2 text-sm whitespace-nowrap text-[var(--color-ink-2)]"
                 >
                   {subject}
                 </span>
@@ -440,7 +440,7 @@ export default async function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-[var(--color-line)] bg-white">
+      <footer className="border-t border-[var(--color-line)] bg-[var(--color-surface)]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-8 text-[13px] text-[var(--color-muted)]">
           <span>Uiren — школьная платформа</span>
           <Link

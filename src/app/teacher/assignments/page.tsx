@@ -53,7 +53,7 @@ export default async function AssignmentsPage() {
       <section>
         <SectionHeader title={t("teacher.newAssignment")} />
         {subjects.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-[var(--color-line)] bg-white px-6 py-10 text-center">
+          <div className="rounded-2xl border border-dashed border-[var(--color-line)] bg-[var(--color-surface)] px-6 py-10 text-center">
             <p className="font-medium">Сначала укажите, что вы преподаёте</p>
             <p className="muted mx-auto mt-1.5 max-w-sm">
               Отметьте предметы и классы — после этого можно создавать задания.
@@ -72,7 +72,7 @@ export default async function AssignmentsPage() {
         {assignments.length === 0 ? (
           <Empty text={t("common.empty")} />
         ) : (
-          <div className="overflow-hidden rounded-xl border bg-white">
+          <div className="overflow-hidden rounded-xl border bg-[var(--color-surface)]">
             <table className="w-full text-sm">
               <thead className="bg-[var(--color-canvas)] text-left">
                 <tr className="text-xs tracking-wide text-[var(--color-muted)] uppercase">

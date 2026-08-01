@@ -6,11 +6,16 @@ export function Stat({
   value,
   hint,
   tone = "default",
+  Icon,
+  delay = 0,
 }: {
   label: string;
   value: string | number;
   hint?: string;
   tone?: "default" | "brand" | "warn";
+  Icon?: (props: { className?: string }) => React.ReactNode;
+  /** Сдвиг появления, чтобы карточки выезжали по очереди. */
+  delay?: number;
 }) {
   const valueTone =
     tone === "brand"
@@ -19,15 +24,34 @@ export function Stat({
         ? "text-[var(--color-warn)]"
         : "text-[var(--color-ink)]";
 
+  const iconTone =
+    tone === "brand"
+      ? "bg-[var(--color-brand-tint)] text-[var(--color-brand)]"
+      : tone === "warn"
+        ? "bg-[var(--color-warn-tint)] text-[var(--color-warn)]"
+        : "bg-[var(--color-line-2)] text-[var(--color-muted)]";
+
   return (
-    <div className="card">
-      <p className="overline">{label}</p>
+    <div
+      className="animate-rise card group relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="overline">{label}</p>
+        {Icon && (
+          <span
+            className={`grid size-8 shrink-0 place-items-center rounded-lg transition-transform duration-300 group-hover:scale-110 ${iconTone}`}
+          >
+            <Icon className="size-4" />
+          </span>
+        )}
+      </div>
       <p
-        className={`mt-2 text-[30px] leading-none font-semibold tracking-tight ${valueTone}`}
+        className={`mt-3 text-[34px] leading-none font-semibold tracking-tight tabular-nums ${valueTone}`}
       >
         {value}
       </p>
-      {hint && <p className="mt-2 text-xs text-[var(--color-muted)]">{hint}</p>}
+      {hint && <p className="mt-2.5 text-xs text-[var(--color-muted)]">{hint}</p>}
     </div>
   );
 }
@@ -79,7 +103,7 @@ export function Bar({ percent, tone }: { percent: number; tone?: string }) {
 
 export function Empty({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-[var(--color-line)] bg-white/60 px-5 py-12 text-center">
+    <div className="rounded-2xl border border-dashed border-[var(--color-line)] bg-[var(--color-surface)]/60 px-5 py-12 text-center">
       <p className="muted">{text}</p>
     </div>
   );

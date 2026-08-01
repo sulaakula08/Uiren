@@ -174,7 +174,7 @@ export function Tour({
 
       <div
         key={index}
-        className="animate-pop fixed rounded-2xl border border-[var(--color-line)] bg-white p-5 shadow-[0_12px_40px_rgb(16_24_40_/_0.22)]"
+        className="animate-pop fixed rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-[0_12px_40px_rgb(16_24_40_/_0.22)]"
         style={{ top: cardTop, left: cardLeft, width: CARD_W }}
       >
         <div className="mb-2.5 flex items-center gap-1.5">
@@ -240,7 +240,7 @@ export function TourButton({ label }: { label: string }) {
       data-tour="help"
       title={label}
       aria-label={label}
-      className="grid size-9 shrink-0 place-items-center rounded-xl border border-[var(--color-line)] bg-white text-[var(--color-muted)] transition-colors hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
+      className="grid size-9 shrink-0 place-items-center rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-muted)] transition-colors hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
       onClick={() => window.dispatchEvent(new Event("uiren:tour"))}
     >
       <svg

@@ -3,75 +3,10 @@ import { OAuth2Client } from "google-auth-library";
 import { db } from "@/lib/db";
 import { createSessionCookie } from "@/lib/session";
 import { HOME_BY_ROLE } from "@/lib/auth";
+import { signPendingProfile } from "@/lib/google-pending";
 
 export const runtime = "nodejs";
 
-/**
- * Заводит аккаунт по Google-профилю, минуя код школы. Только для разработки.
- *
- * Включается двумя условиями сразу, и это намеренно:
- *   1. UIREN_UNSAFE_OPEN_SIGNUP === "true";
- *   2. сборка не продакшен.
- *
- * Второе условие нельзя обойти переменной окружения. Если бы хватало флага,
- * достаточно было бы один раз забыть его на Vercel — и в платформу с работами
- * и оценками школьников заходил бы любой человек с любым Gmail. В обычной
- * жизни аккаунты создаёт только регистрация по коду приглашения.
- *
- * Возвращает null, если режим выключен или подходящей школы нет — вызывающий
- * код тогда отдаёт обычное «зарегистрируйтесь по коду школы».
- */
-async function createDevUser(profile: {
-  googleId: string;
-  email: string;
-  fullName: string;
-  avatarUrl?: string;
-}) {
-  if (process.env.NODE_ENV === "production") return null;
-  if (process.env.UIREN_UNSAFE_OPEN_SIGNUP !== "true") return null;
-
-  // Куда зачислять: код из переменной, по умолчанию — демо-школа из сида.
-  const joinCode = (process.env.UIREN_DEV_SCHOOL_CODE ?? "DEMO25").toUpperCase();
-  const school = await db.school.findUnique({
-    where: { joinCode },
-    include: { classGroups: { orderBy: { name: "asc" }, take: 1 } },
-  });
-  if (!school) return null;
-
-  const klass = school.classGroups[0];
-
-  console.warn(
-    `[UNSAFE_OPEN_SIGNUP] создан аккаунт ${profile.email} в школе «${school.name}». Режим только для разработки.`,
-  );
-
-  return db.user.create({
-    data: {
-      email: profile.email,
-      googleId: profile.googleId,
-      fullName: profile.fullName,
-      avatarUrl: profile.avatarUrl,
-      role: "STUDENT",
-      schoolId: school.id,
-      // Ученик без класса не увидит ни одного задания — сразу зачисляем.
-      ...(klass ? { enrollments: { create: { classId: klass.id } } } : {}),
-      // Входа по паролю у такого аккаунта нет: хеш заведомо ни с чем не сойдётся.
-      passwordHash: "!google-only",
-    },
-  });
-}
-
-/**
- * Вход через Google.
- *
- * Клиент получает ID-токен от кнопки Sign in with Google и присылает его сюда.
- * Токен проверяется на подлинность, после чего выдаётся обычная сессионная
- * cookie Uiren — дальше приложение не различает, как именно вошёл человек.
- *
- * Аккаунты здесь НЕ создаются: у пользователя обязаны быть школа и роль, а
- * Google их не сообщает. Кто это — учитель или ученик, и в какую школу его
- * зачислять, из токена не следует. Регистрация остаётся по коду приглашения,
- * Google — способ входа для уже существующих аккаунтов.
- */
 export async function POST(request: Request) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   if (!clientId) {
@@ -138,28 +73,25 @@ export async function POST(request: Request) {
   }
 
   // Сначала ищем по googleId: почту в Google-аккаунте можно сменить, а sub — нет.
-  let user =
+  const user =
     (await db.user.findUnique({ where: { googleId } })) ??
     (await db.user.findUnique({ where: { email } }));
 
+  // Аккаунта нет — не отказываем, а ведём выбирать роль и школу. Профиль
+  // передаём подписанным токеном: иначе на форме можно было бы подменить почту
+  // и завести аккаунт на чужую.
   if (!user) {
-    user = await createDevUser({
+    const pending = await signPendingProfile({
       googleId,
       email,
       fullName: fullName || email.split("@")[0],
       avatarUrl,
     });
-  }
-
-  if (!user) {
-    return NextResponse.json(
-      {
-        error:
-          "Аккаунта с такой почтой нет. Сначала зарегистрируйтесь по коду школы.",
-        code: "NO_ACCOUNT",
-      },
-      { status: 404 },
-    );
+    return NextResponse.json({
+      success: true,
+      needsProfile: true,
+      redirectTo: `/register/google?t=${encodeURIComponent(pending)}`,
+    });
   }
 
   // Первый вход через Google по существующему аккаунту — привязываем его.

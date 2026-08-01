@@ -1,15 +1,17 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { logout } from "@/app/actions";
 import type { SessionPayload } from "@/lib/session";
 import type { Locale, MessageKey, Translator } from "@/lib/i18n";
 import { DEFAULT_THEME, THEME_COOKIE, isTheme } from "@/lib/theme";
 import { tourFor } from "@/lib/tour-steps";
 import { LocaleSwitcher } from "./locale-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
-import { IconLogout, IconSettings } from "./icons";
+import { IconSettings } from "./icons";
 import { Logo } from "./logo";
+import { LogoutButton } from "./logout-button";
+import { MobileNav } from "./mobile-nav";
 import { NavLinks, type NavItem } from "./nav-links";
+import { SwipeBack } from "./swipe-back";
 import { Tour, TourButton } from "./tour";
 
 function initials(name: string) {
@@ -41,7 +43,8 @@ export async function Shell({
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[248px_1fr]">
-      <aside className="flex flex-col gap-6 border-b border-[var(--color-line)] bg-[var(--color-surface)] p-4 lg:sticky lg:top-0 lg:h-screen lg:border-r lg:border-b-0">
+      {/* На телефоне разделы уехали вниз, поэтому боковая панель скрыта. */}
+      <aside className="hidden flex-col gap-6 border-[var(--color-line)] bg-[var(--color-surface)] p-4 lg:sticky lg:top-0 lg:flex lg:h-screen lg:border-r">
         <Link href="/" className="logo-lockup flex items-center gap-2.5 px-1">
           <Logo className="size-9" title={t("app.name")} />
           <span className="text-[15px] font-semibold tracking-tight">
@@ -51,7 +54,7 @@ export async function Shell({
 
         <NavLinks items={nav} />
 
-        <div className="mt-auto hidden space-y-3 lg:block">
+        <div className="mt-auto space-y-3">
           <Link
             href="/settings"
             className="flex items-center gap-2.5 rounded-xl bg-[var(--color-canvas)] px-3 py-2.5 transition-colors hover:bg-[var(--color-brand-tint)]"
@@ -73,22 +76,24 @@ export async function Shell({
           <div className="flex items-center gap-2">
             <TourButton label={t("tour.replay")} />
             <LocaleSwitcher current={locale} />
-            <form action={logout} className="flex-1">
-              <button
-                type="submit"
-                className="btn-ghost w-full px-2.5 py-2 text-xs"
-                title={t("nav.logout")}
-              >
-                <IconLogout className="size-4" />
-              </button>
-            </form>
+            <LogoutButton
+              label={t("nav.logout")}
+              className="btn-ghost flex-1 px-2.5 py-2 text-xs"
+              iconOnly
+            />
           </div>
         </div>
       </aside>
 
-      <div className="min-w-0">
-        <div className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] bg-[var(--color-surface)] px-4 py-2.5 lg:hidden">
-          <span className="text-sm font-medium">{session.fullName}</span>
+      <div className="has-mobile-nav min-w-0">
+        {/* Верхняя строка телефона: кто вошёл, тема и вход в настройки. */}
+        <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[var(--color-line)] bg-[var(--color-surface)]/90 px-4 py-2.5 backdrop-blur-md lg:hidden">
+          <Link href="/" className="logo-lockup flex items-center gap-2">
+            <Logo className="size-7" title={t("app.name")} />
+            <span className="text-[15px] font-semibold tracking-tight">
+              {t("app.name")}
+            </span>
+          </Link>
           <div className="flex items-center gap-2">
             <ThemeSwitcher current={theme} locale={locale} />
             <Link
@@ -98,16 +103,16 @@ export async function Shell({
             >
               <IconSettings className="size-4" />
             </Link>
-            <form action={logout}>
-              <button type="submit" className="btn-ghost px-3 py-2 text-xs">
-                {t("nav.logout")}
-              </button>
-            </form>
           </div>
         </div>
 
-        <main className="mx-auto max-w-5xl p-5 lg:p-8">{children}</main>
+        <SwipeBack>
+          <main className="mx-auto max-w-5xl p-5 lg:p-8">{children}</main>
+        </SwipeBack>
       </div>
+
+      {/* Панель вне SwipeBack: внутри трансформируемого блока fixed ломается. */}
+      <MobileNav items={nav} />
 
       <Tour steps={tourFor(session.role)} autoStart={!tourDone} />
     </div>

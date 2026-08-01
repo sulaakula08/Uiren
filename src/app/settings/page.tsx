@@ -12,7 +12,7 @@ import {
   IconPalette,
   IconShield,
 } from "@/components/icons";
-import { logout } from "@/app/actions";
+import { LogoutButton } from "@/components/logout-button";
 import { replayTour } from "./actions";
 import { PasswordForm, ProfileForm } from "./forms";
 
@@ -151,12 +151,9 @@ export default async function SettingsPage() {
             ))}
           </dl>
 
-          <form action={logout} className="mt-4">
-            <button type="submit" className="btn-danger">
-              <IconLogout className="size-4" />
-              Выйти из аккаунта
-            </button>
-          </form>
+          <div className="mt-4">
+            <LogoutButton label="Выйти из аккаунта" className="btn-danger" />
+          </div>
         </Section>
       </div>
     </div>

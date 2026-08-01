@@ -482,6 +482,139 @@ body {
 }
 
 /*
+ * Мобильная нижняя панель.
+ *
+ * Держится над контентом, учитывает «шторку» под экраном (safe-area) на
+ * телефонах без физической кнопки. Подсветка активного пункта — отдельный
+ * блок за иконкой, чтобы её можно было анимировать.
+ */
+.mobile-nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  gap: 0.25rem;
+  padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--color-line);
+  background: color-mix(in oklab, var(--color-surface) 88%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.mobile-nav-item {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.45rem 0.25rem 0.35rem;
+  color: var(--color-muted);
+  transition: color 0.22s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-nav-item[data-active="true"] {
+  color: var(--color-brand);
+}
+
+/* Подложка под иконкой: разрастается, когда раздел становится активным. */
+.mobile-nav-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 1.9rem;
+  border-radius: 999px;
+  transition: transform 0.32s cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+
+.mobile-nav-icon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--color-brand-tint);
+  transform: scale(0.6);
+  opacity: 0;
+  transition:
+    transform 0.32s cubic-bezier(0.34, 1.45, 0.64, 1),
+    opacity 0.22s ease;
+}
+
+.mobile-nav-item[data-active="true"] .mobile-nav-icon::before {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.mobile-nav-item:active .mobile-nav-icon {
+  transform: scale(0.9);
+}
+
+.mobile-nav-icon > * {
+  position: relative;
+}
+
+.mobile-nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Контент не должен прятаться под панелью. */
+.has-mobile-nav {
+  padding-bottom: calc(4.9rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 1024px) {
+  .has-mobile-nav {
+    padding-bottom: 0;
+  }
+}
+
+/* Свайп-назад двигает этот блок; will-change убирает дрожание на телефоне. */
+.swipe-area {
+  will-change: transform;
+  touch-action: pan-y;
+}
+
+/*
+ * Диалог подтверждения. Нативный <dialog> даёт Esc, фокус-ловушку и подложку.
+ */
+.uiren-dialog {
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--color-line);
+  border-radius: 1.25rem;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-lift);
+}
+
+.uiren-dialog::backdrop {
+  background: rgb(6 12 24 / 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.uiren-dialog[open] {
+  animation: uiren-pop 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uiren-dialog[open] {
+    animation: none;
+  }
+}
+
+/*
  * Логотип.
  *
  * transform-box: fill-box нужен, чтобы вращение искры считалось от её

@@ -6,7 +6,7 @@ import { getT } from "@/lib/locale";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { Logo } from "@/components/logo";
 import { LoginForm } from "./login-form";
-import { GoogleButton } from "./google-button";
+import GoogleLoginButton from "@/components/GoogleLoginButton";
 
 export default async function LoginPage() {
   const session = await getSession();
@@ -45,7 +45,16 @@ export default async function LoginPage() {
           />
 
           {/* Кнопка появляется только если вход через Google настроен. */}
-          {googleClientId && <GoogleButton clientId={googleClientId} />}
+          {googleClientId && (
+            <>
+              <div className="mt-5 mb-1 flex items-center gap-3">
+                <span className="h-px flex-1 bg-[var(--color-line)]" />
+                <span className="text-xs text-[var(--color-muted)]">или</span>
+                <span className="h-px flex-1 bg-[var(--color-line)]" />
+              </div>
+              <GoogleLoginButton />
+            </>
+          )}
         </div>
 
         <p className="muted mt-5 text-center text-sm">

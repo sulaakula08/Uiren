@@ -95,7 +95,7 @@ export function UserForm() {
         </p>
       )}
       {state.ok && (
-        <p className="rounded-lg bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <p className="rounded-lg bg-[var(--color-brand-tint)] px-3 py-2 text-sm text-[var(--color-brand)]">
           {state.ok}
         </p>
       )}

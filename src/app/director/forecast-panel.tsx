@@ -7,7 +7,7 @@ import { buildForecast, type ForecastState } from "./actions";
 const CONFIDENCE: Record<string, { label: string; tone: string }> = {
   LOW: { label: "низкая уверенность", tone: "bg-red-50 text-red-800" },
   MEDIUM: { label: "средняя уверенность", tone: "bg-amber-50 text-amber-800" },
-  HIGH: { label: "высокая уверенность", tone: "bg-teal-50 text-teal-800" },
+  HIGH: { label: "высокая уверенность", tone: "bg-[var(--color-brand-tint)] text-[var(--color-brand)]" },
 };
 
 const TREND: Record<string, string> = {

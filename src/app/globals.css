@@ -10,19 +10,19 @@
   /* Фон карточек и панелей. В тёмной теме перестаёт быть белым — поэтому
      во всём интерфейсе используется эта переменная, а не утилита bg-white. */
   --color-surface: #ffffff;
-  --color-brand: #0e7c6b;
-  --color-brand-dark: #0a6152;
-  --color-brand-tint: #e6f5f2;
-  /* Текст поверх фирменного фона. В тёмной теме зелёный светлее, и белый
-     на нём даёт всего 2.9:1 — поэтому там текст, наоборот, тёмный. */
+  --color-brand: #1d5fd1;
+  --color-brand-dark: #1748a8;
+  --color-brand-tint: #e8effd;
+  /* Текст поверх фирменного фона. В тёмной теме синий светлее, и белый
+     на нём не набирает 4.5:1 — поэтому там текст, наоборот, тёмный. */
   --color-on-brand: #ffffff;
   /* Тёмная полоса разбивает «белый лендинг» и даёт странице ритм. */
-  --color-night: #0c1a1f;
+  --color-night: #0b1526;
   /* Цвет крупных цифр шагов. Держим не ниже 3:1 к --color-night: цифры
      декоративные, но это всё же содержимое, и его должно быть видно. */
-  --color-night-2: #4c6f79;
-  --color-night-ink: #e6eff0;
-  --color-night-muted: #90a8ae;
+  --color-night-2: #5471a6;
+  --color-night-ink: #e7ecf7;
+  --color-night-muted: #94a5c4;
   --color-warn: #b54708;
   --color-warn-tint: #fef6ee;
   --color-danger: #b42318;
@@ -45,18 +45,18 @@
  */
 @layer base {
   :root[data-theme="dark"] {
-    --color-ink: #e9f1f2;
-    --color-ink-2: #bdcdd2;
-    --color-muted: #8698a0;
-    --color-line: #23343b;
-    --color-line-2: #1a272c;
-    --color-canvas: #0d1519;
-    --color-surface: #131f24;
-    /* Фирменный зелёный на тёмном фоне светлее — иначе не хватает контраста. */
-    --color-brand: #34a894;
-    --color-brand-dark: #46bda8;
-    --color-brand-tint: #10312c;
-    --color-on-brand: #05201b;
+    --color-ink: #e9edf7;
+    --color-ink-2: #bcc6dd;
+    --color-muted: #8792ab;
+    --color-line: #26304a;
+    --color-line-2: #1b2236;
+    --color-canvas: #0d1220;
+    --color-surface: #141a2b;
+    /* Фирменный синий на тёмном фоне светлее — иначе не хватает контраста. */
+    --color-brand: #6fa8ff;
+    --color-brand-dark: #8bbaff;
+    --color-brand-tint: #16233d;
+    --color-on-brand: #061530;
     --color-warn: #f0a868;
     --color-warn-tint: #2e2113;
     --color-danger: #f38b80;
@@ -70,17 +70,17 @@
 
   @media (prefers-color-scheme: dark) {
     :root[data-theme="system"] {
-      --color-ink: #e9f1f2;
-      --color-ink-2: #bdcdd2;
-      --color-muted: #8698a0;
-      --color-line: #23343b;
-      --color-line-2: #1a272c;
-      --color-canvas: #0d1519;
-      --color-surface: #131f24;
-      --color-brand: #34a894;
-      --color-brand-dark: #46bda8;
-      --color-brand-tint: #10312c;
-      --color-on-brand: #05201b;
+      --color-ink: #e9edf7;
+      --color-ink-2: #bcc6dd;
+      --color-muted: #8792ab;
+      --color-line: #26304a;
+      --color-line-2: #1b2236;
+      --color-canvas: #0d1220;
+      --color-surface: #141a2b;
+      --color-brand: #6fa8ff;
+      --color-brand-dark: #8bbaff;
+      --color-brand-tint: #16233d;
+      --color-on-brand: #061530;
       --color-warn: #f0a868;
       --color-warn-tint: #2e2113;
       --color-danger: #f38b80;
@@ -153,13 +153,13 @@ body {
 
 @keyframes uiren-pulse-ring {
   0% {
-    box-shadow: 0 0 0 0 rgb(14 124 107 / 0.45);
+    box-shadow: 0 0 0 0 rgb(29 95 209 / 0.45);
   }
   70% {
-    box-shadow: 0 0 0 12px rgb(14 124 107 / 0);
+    box-shadow: 0 0 0 12px rgb(29 95 209 / 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgb(14 124 107 / 0);
+    box-shadow: 0 0 0 0 rgb(29 95 209 / 0);
   }
 }
 
@@ -295,10 +295,9 @@ body {
   }
 
   .card-link {
-    @apply rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5
-      shadow-[var(--shadow-soft)] transition-all duration-150
-      hover:-translate-y-0.5 hover:border-[var(--color-brand)]/30
-      hover:shadow-[var(--shadow-lift)];
+    @apply relative isolate overflow-hidden rounded-2xl border
+      border-[var(--color-line)] bg-[var(--color-surface)] p-5
+      shadow-[var(--shadow-soft)];
   }
 
   /* Tailwind v4 не даёт @apply-ить собственные component-классы,
@@ -455,6 +454,115 @@ body {
   .reveal {
     animation: none;
     opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * Наведение на карточку.
+ *
+ * Раньше это был один общий `transition-all` на 150 мс — движение получалось
+ * вялым и одинаковым для всех свойств. Теперь у каждого свойства своя кривая:
+ * подъём идёт с лёгким перелётом (пружина), свечение и полоска — плавно.
+ * Плюс состояние :active — нажатие ощущается, а не проваливается.
+ */
+.card-link {
+  transition:
+    transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1),
+    box-shadow 0.28s ease,
+    border-color 0.24s ease;
+}
+
+/* Мягкое свечение из верхнего угла — карточка «подсвечивается» под курсором. */
+.card-link::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: radial-gradient(
+    120% 120% at 0% 0%,
+    var(--color-brand-tint),
+    transparent 62%
+  );
+  transition: opacity 0.3s ease;
+}
+
+/* Акцентная полоска слева вырастает снизу вверх. */
+.card-link::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: var(--color-brand);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card-link:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+  border-color: color-mix(in oklab, var(--color-brand) 38%, transparent);
+}
+
+.card-link:hover::before {
+  opacity: 1;
+}
+
+.card-link:hover::after {
+  transform: scaleY(1);
+}
+
+/* Нажатие: карточка коротко проседает. Быстрее наведения — так честнее. */
+.card-link:active {
+  transform: translateY(-1px) scale(0.994);
+  transition-duration: 0.09s;
+}
+
+/* Кнопки: та же логика — пружина на наведении, короткий отклик на нажатие. */
+.btn,
+.btn-primary,
+.btn-ghost,
+.btn-danger {
+  transition:
+    transform 0.18s cubic-bezier(0.34, 1.45, 0.64, 1),
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px color-mix(in oklab, var(--color-brand) 34%, transparent);
+}
+
+.btn-ghost:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--color-brand) 40%, transparent);
+  color: var(--color-ink);
+}
+
+.btn:active,
+.btn-primary:active,
+.btn-ghost:active,
+.btn-danger:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.08s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-link:hover,
+  .card-link:active,
+  .btn-primary:hover,
+  .btn-ghost:hover,
+  .btn:active,
+  .btn-primary:active,
+  .btn-ghost:active,
+  .btn-danger:active {
     transform: none;
   }
 }

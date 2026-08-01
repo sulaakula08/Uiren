@@ -19,7 +19,7 @@ const ROOT_CAUSE: Record<string, { label: string; hint: string; tone: string }> 
     INDIVIDUAL: {
       label: "Отдельные ученики",
       hint: "Класс в целом справился, нужна точечная работа.",
-      tone: "bg-teal-50 text-teal-800",
+      tone: "bg-[var(--color-brand-tint)] text-[var(--color-brand)]",
     },
     MIXED: {
       label: "Смешанная причина",

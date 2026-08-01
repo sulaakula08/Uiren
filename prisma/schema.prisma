@@ -1,0 +1,352 @@
+// Uiren — интеллектуальный слой поверх школьной инфраструктуры.
+// SQLite для локальной разработки; для продакшена меняется на postgresql
+// (серверы в РК — архитектурное требование, а не пункт roadmap).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────── Организация
+
+model School {
+  id        String   @id @default(cuid())
+  name      String
+  city      String
+  // Внешний журнал, поверх которого работаем: KUNDELIK | BILIMCLASS | EDUMARK | NONE
+  journal   String   @default("NONE")
+  /// Код приглашения: по нему учителя, ученики и родители сами заводят аккаунт.
+  joinCode  String   @unique
+  /// Шаг мастера настройки, на котором остановился администратор (0 — не начат).
+  setupStep Int      @default(0)
+  createdAt DateTime @default(now())
+
+  users        User[]
+  classGroups  ClassGroup[]
+  subjects     Subject[]
+}
+
+enum Role {
+  ADMIN
+  DIRECTOR
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  role         Role
+  locale       String   @default("ru") // ru | kk
+  schoolId     String?
+  /// Когда пользователь прошёл обучающий тур. null — тур покажется при входе.
+  tourDoneAt   DateTime?
+  createdAt    DateTime @default(now())
+
+  school School? @relation(fields: [schoolId], references: [id])
+
+  // Учитель
+  assignments TeacherAssignment[]
+  lessons     Lesson[]            @relation("LessonAuthor")
+  createdWork Assignment[]        @relation("AssignmentAuthor")
+  sentMessages ParentMessage[]    @relation("MessageAuthor")
+
+  // Ученик
+  enrollments   Enrollment[]
+  submissions   Submission[]
+  tutorSessions TutorSession[]
+  aboutMessages ParentMessage[]   @relation("MessageAboutStudent")
+  childLinks    ParentLink[]      @relation("AsStudent")
+
+  // Родитель
+  parentLinks     ParentLink[]    @relation("AsParent")
+  receivedMessages ParentMessage[] @relation("MessageRecipient")
+
+  aiLogs AiLog[]
+
+  @@index([schoolId, role])
+}
+
+model ParentLink {
+  id        String @id @default(cuid())
+  parentId  String
+  studentId String
+  relation  String @default("parent")
+
+  parent  User @relation("AsParent", fields: [parentId], references: [id], onDelete: Cascade)
+  student User @relation("AsStudent", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+}
+
+// ─────────────────────────────────────── Учебная структура
+
+model Subject {
+  id       String @id @default(cuid())
+  schoolId String
+  name     String // "Математика"
+  nameKk   String // "Математика" (каз.)
+  code     String // MATH
+
+  school      School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  topics      Topic[]
+  assignments TeacherAssignment[]
+  lessons     Lesson[]
+  work        Assignment[]
+
+  @@unique([schoolId, code])
+}
+
+model ClassGroup {
+  id       String @id @default(cuid())
+  schoolId String
+  name     String // "9А"
+  grade    Int // 9
+
+  school      School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+  assignments TeacherAssignment[]
+  lessons     Lesson[]
+  work        Assignment[]
+
+  @@unique([schoolId, name])
+}
+
+model Enrollment {
+  id        String @id @default(cuid())
+  studentId String
+  classId   String
+
+  student User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class   ClassGroup @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, classId])
+}
+
+/// Учитель ведёт предмет в классе.
+model TeacherAssignment {
+  id        String @id @default(cuid())
+  teacherId String
+  subjectId String
+  classId   String
+
+  teacher User       @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  class   ClassGroup @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, subjectId, classId])
+}
+
+/// Тема учебной программы (ГОСО) — единица, по которой копится продольная аналитика.
+model Topic {
+  id        String @id @default(cuid())
+  subjectId String
+  grade     Int
+  code      String // "9.2.1"
+  title     String
+  titleKk   String
+
+  subject Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+  work    Assignment[]
+
+  @@unique([subjectId, code])
+}
+
+// ─────────────────────────────────────── Слой 1: исполнение
+
+/// КСП/ССП — краткосрочный план урока, сгенерированный AI и отредактированный учителем.
+model Lesson {
+  id         String   @id @default(cuid())
+  authorId   String
+  subjectId  String
+  classId    String
+  topicId    String?
+  title      String
+  date       DateTime @default(now())
+  /// JSON: { objectives, criteria, stages[], resources, differentiation }
+  planJson   String
+  aiGenerated Boolean @default(false)
+  createdAt  DateTime @default(now())
+
+  author  User       @relation("LessonAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  subject Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  class   ClassGroup @relation(fields: [classId], references: [id], onDelete: Cascade)
+  topic   Topic?     @relation(fields: [topicId], references: [id])
+
+  @@index([classId, date])
+}
+
+enum AssignmentKind {
+  HOMEWORK
+  QUIZ
+  FORMATIVE
+  SUMMATIVE
+}
+
+model Assignment {
+  id          String         @id @default(cuid())
+  authorId    String
+  subjectId   String
+  classId     String
+  topicId     String?
+  kind        AssignmentKind @default(HOMEWORK)
+  title       String
+  description String
+  /// JSON-массив заданий: [{ id, prompt, expected, points }]
+  tasksJson   String
+  maxScore    Int            @default(10)
+  dueAt       DateTime?
+  aiGenerated Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+
+  author  User       @relation("AssignmentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  subject Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  class   ClassGroup @relation(fields: [classId], references: [id], onDelete: Cascade)
+  topic   Topic?     @relation(fields: [topicId], references: [id])
+
+  submissions Submission[]
+
+  @@index([classId, createdAt])
+}
+
+/// Природа ошибки — ядро слоя 2. Не «неверно», а «почему неверно».
+enum ErrorNature {
+  CORRECT
+  CONCEPT_GAP // не понял концепт
+  CALCULATION // понял, но ошибся в вычислении
+  CARELESS // невнимательность, описка
+  INCOMPLETE // не доделал
+  NOT_ATTEMPTED // не приступал
+  SUSPECTED_COPY // подозрение на списывание
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  AI_REVIEWED
+  TEACHER_APPROVED
+}
+
+model Submission {
+  id           String           @id @default(cuid())
+  assignmentId String
+  studentId    String
+  /// JSON: { [taskId]: "ответ ученика" }
+  answersJson  String
+  status       SubmissionStatus @default(DRAFT)
+  submittedAt  DateTime?
+  createdAt    DateTime         @default(now())
+
+  // Результат проверки
+  aiScore       Int?
+  teacherScore  Int?
+  aiFeedback    String? // текст фидбека ученику
+  aiSummary     String? // краткий вывод для учителя
+  reviewedAt    DateTime?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student    User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  findings   Finding[]
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId, createdAt])
+}
+
+/// Разбор одного задания внутри работы — сюда пишется классификация ошибки.
+model Finding {
+  id           String      @id @default(cuid())
+  submissionId String
+  taskId       String
+  nature       ErrorNature
+  points       Int         @default(0)
+  maxPoints    Int         @default(1)
+  comment      String
+  /// Ключевое понятие, которое просело — агрегируется в аналитику класса.
+  concept      String?
+
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+}
+
+// ─────────────────────────────────────── Слой 3: действие
+
+enum MessageStatus {
+  DRAFT
+  SENT
+}
+
+model ParentMessage {
+  id          String        @id @default(cuid())
+  authorId    String // учитель
+  recipientId String // родитель
+  studentId   String
+  subjectLine String
+  body        String
+  status      MessageStatus @default(DRAFT)
+  aiGenerated Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  sentAt      DateTime?
+
+  author    User @relation("MessageAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  recipient User @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  student   User @relation("MessageAboutStudent", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, createdAt])
+}
+
+// ─────────────────────────────────────── AI-тьютор ученика
+
+model TutorSession {
+  id        String   @id @default(cuid())
+  studentId String
+  title     String   @default("Новый диалог")
+  createdAt DateTime @default(now())
+
+  student  User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  messages TutorMessage[]
+
+  @@index([studentId, createdAt])
+}
+
+model TutorMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String // "user" | "assistant"
+  content   String
+  createdAt DateTime @default(now())
+
+  session TutorSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
+
+// ─────────────────────────────────────── Метрики и аудит
+
+/// Каждый вызов модели: аудит, стоимость и headline-метрика «часов сэкономлено».
+model AiLog {
+  id            String   @id @default(cuid())
+  userId        String
+  feature       String // grade | lesson_plan | quiz | class_insight | parent_message | tutor | ent_forecast
+  model         String
+  inputTokens   Int      @default(0)
+  outputTokens  Int      @default(0)
+  /// Оценка сэкономленного времени в минутах для этой операции.
+  minutesSaved  Int      @default(0)
+  ok            Boolean  @default(true)
+  error         String?
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([feature, createdAt])
+}

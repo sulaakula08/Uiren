@@ -49,6 +49,11 @@ model User {
   role         Role
   locale       String   @default("ru") // ru | kk
   schoolId     String?
+  /// Google-аккаунт, привязанный к этому пользователю. Заполняется при первом
+  /// входе через Google; пароль при этом продолжает работать.
+  googleId     String?  @unique
+  /// Аватар из Google-профиля.
+  avatarUrl    String?
   /// Когда пользователь прошёл обучающий тур. null — тур покажется при входе.
   tourDoneAt   DateTime?
   createdAt    DateTime @default(now())

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const SCRIPT_SRC = "https://accounts.google.com/gsi/client";
@@ -11,9 +11,31 @@ declare global {
   }
 }
 
+/** Оформление кнопки: считается в браузере, до этого рисовать нечего. */
+type Look = { theme: string; width: number };
+
 export default function GoogleLoginButton() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [look, setLook] = useState<Look | null>(null);
+  const holder = useRef<HTMLDivElement>(null);
+
+  // Тему и ширину нельзя вычислить на сервере: там нет ни <html data-theme>,
+  // ни ширины карточки. Поэтому сначала измеряем, и только потом подключаем
+  // скрипт Google — иначе он разберёт разметку со значениями по умолчанию.
+  useEffect(() => {
+    const attr = document.documentElement.dataset.theme;
+    const dark =
+      attr === "dark" ||
+      (attr === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+    // Google принимает ширину от 200 до 400 и не тянется сам.
+    const available = holder.current?.offsetWidth ?? 320;
+    const width = Math.max(200, Math.min(400, Math.round(available)));
+
+    setLook({ theme: dark ? "filled_black" : "outline", width });
+  }, []);
 
   useEffect(() => {
     // 1. Колбэк должен лежать на window до загрузки скрипта: разметка
@@ -44,7 +66,10 @@ export default function GoogleLoginButton() {
       }
     };
 
-    // 2. Скрипт добавляем один раз на страницу.
+    // 2. Скрипт — только после того, как оформление посчитано: Google читает
+    //    data-атрибуты один раз при загрузке и потом их не перечитывает.
+    if (!look) return;
+
     const existing = document.querySelector<HTMLScriptElement>(
       `script[src="${SCRIPT_SRC}"]`,
     );
@@ -62,25 +87,36 @@ export default function GoogleLoginButton() {
       // Снимаем только колбэк.
       delete window.handleGoogleCallback;
     };
-  }, [router]);
+  }, [router, look]);
 
   return (
-    <div className="my-4 flex flex-col items-center justify-center">
-      <div
-        id="g_id_onload"
-        data-client_id={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}
-        data-callback="handleGoogleCallback"
-        data-auto_prompt="false"
-      />
-      <div
-        className="g_id_signin"
-        data-type="standard"
-        data-shape="rectangular"
-        data-theme="outline"
-        data-text="signin_with"
-        data-size="large"
-        data-logo_alignment="left"
-      />
+    <div ref={holder} className="mt-4 flex flex-col items-stretch">
+      {/* Пока оформление не посчитано, держим место под кнопку: без этого
+          карточка дёргается на высоту кнопки в момент появления. */}
+      {!look && <div className="h-10" aria-hidden />}
+
+      {look && (
+        <>
+          <div
+            id="g_id_onload"
+            data-client_id={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+            data-callback="handleGoogleCallback"
+            data-auto_prompt="false"
+          />
+          {/* Кнопку рисует Google — своя вёрстка нарушает их правила
+              оформления. Настраивать можно только эти параметры. */}
+          <div
+            className="g_id_signin flex justify-center"
+            data-type="standard"
+            data-shape="pill"
+            data-theme={look.theme}
+            data-text="continue_with"
+            data-size="large"
+            data-logo_alignment="center"
+            data-width={String(look.width)}
+          />
+        </>
+      )}
 
       {error && (
         <p className="animate-pop mt-3 w-full rounded-xl bg-[var(--color-danger-tint)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">

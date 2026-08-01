@@ -7,6 +7,60 @@ import { HOME_BY_ROLE } from "@/lib/auth";
 export const runtime = "nodejs";
 
 /**
+ * Заводит аккаунт по Google-профилю, минуя код школы. Только для разработки.
+ *
+ * Включается двумя условиями сразу, и это намеренно:
+ *   1. UIREN_UNSAFE_OPEN_SIGNUP === "true";
+ *   2. сборка не продакшен.
+ *
+ * Второе условие нельзя обойти переменной окружения. Если бы хватало флага,
+ * достаточно было бы один раз забыть его на Vercel — и в платформу с работами
+ * и оценками школьников заходил бы любой человек с любым Gmail. В обычной
+ * жизни аккаунты создаёт только регистрация по коду приглашения.
+ *
+ * Возвращает null, если режим выключен или подходящей школы нет — вызывающий
+ * код тогда отдаёт обычное «зарегистрируйтесь по коду школы».
+ */
+async function createDevUser(profile: {
+  googleId: string;
+  email: string;
+  fullName: string;
+  avatarUrl?: string;
+}) {
+  if (process.env.NODE_ENV === "production") return null;
+  if (process.env.UIREN_UNSAFE_OPEN_SIGNUP !== "true") return null;
+
+  // Куда зачислять: код из переменной, по умолчанию — демо-школа из сида.
+  const joinCode = (process.env.UIREN_DEV_SCHOOL_CODE ?? "DEMO25").toUpperCase();
+  const school = await db.school.findUnique({
+    where: { joinCode },
+    include: { classGroups: { orderBy: { name: "asc" }, take: 1 } },
+  });
+  if (!school) return null;
+
+  const klass = school.classGroups[0];
+
+  console.warn(
+    `[UNSAFE_OPEN_SIGNUP] создан аккаунт ${profile.email} в школе «${school.name}». Режим только для разработки.`,
+  );
+
+  return db.user.create({
+    data: {
+      email: profile.email,
+      googleId: profile.googleId,
+      fullName: profile.fullName,
+      avatarUrl: profile.avatarUrl,
+      role: "STUDENT",
+      schoolId: school.id,
+      // Ученик без класса не увидит ни одного задания — сразу зачисляем.
+      ...(klass ? { enrollments: { create: { classId: klass.id } } } : {}),
+      // Входа по паролю у такого аккаунта нет: хеш заведомо ни с чем не сойдётся.
+      passwordHash: "!google-only",
+    },
+  });
+}
+
+/**
  * Вход через Google.
  *
  * Клиент получает ID-токен от кнопки Sign in with Google и присылает его сюда.
@@ -46,6 +100,7 @@ export async function POST(request: Request) {
   let email: string | undefined;
   let emailVerified: boolean | undefined;
   let avatarUrl: string | undefined;
+  let fullName: string | undefined;
 
   try {
     const ticket = await new OAuth2Client(clientId).verifyIdToken({
@@ -57,6 +112,7 @@ export async function POST(request: Request) {
     email = payload?.email?.trim().toLowerCase();
     emailVerified = payload?.email_verified;
     avatarUrl = payload?.picture;
+    fullName = payload?.name;
   } catch {
     // Причину наружу не отдаём: она помогает подбирать токены.
     return NextResponse.json(
@@ -82,9 +138,18 @@ export async function POST(request: Request) {
   }
 
   // Сначала ищем по googleId: почту в Google-аккаунте можно сменить, а sub — нет.
-  const user =
+  let user =
     (await db.user.findUnique({ where: { googleId } })) ??
     (await db.user.findUnique({ where: { email } }));
+
+  if (!user) {
+    user = await createDevUser({
+      googleId,
+      email,
+      fullName: fullName || email.split("@")[0],
+      avatarUrl,
+    });
+  }
 
   if (!user) {
     return NextResponse.json(

@@ -10,6 +10,11 @@
   --color-brand: #0e7c6b;
   --color-brand-dark: #0a6152;
   --color-brand-tint: #e6f5f2;
+  /* Тёмная полоса разбивает «белый лендинг» и даёт странице ритм. */
+  --color-night: #0c1a1f;
+  --color-night-2: #16303a;
+  --color-night-ink: #e6eff0;
+  --color-night-muted: #90a8ae;
   --color-warn: #b54708;
   --color-warn-tint: #fef6ee;
   --color-danger: #b42318;
@@ -34,6 +39,9 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  /* 17px вместо дефолтных 16: текст в интерфейсе читают весь урок. */
+  font-size: 17px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -140,6 +148,28 @@ body {
   }
 }
 
+/* Бесконечная лента предметов. Сдвиг ровно на половину — список продублирован. */
+@keyframes uiren-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Слово поднимается из-под маски — построчное появление заголовка. */
+@keyframes uiren-word {
+  from {
+    opacity: 0;
+    transform: translateY(0.9em) rotate(2deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
+}
+
 @utility animate-rise {
   animation: uiren-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -171,6 +201,14 @@ body {
 
 @utility animate-float {
   animation: uiren-float 6s ease-in-out infinite;
+}
+
+@utility animate-marquee {
+  animation: uiren-marquee 38s linear infinite;
+}
+
+@utility animate-word {
+  animation: uiren-word 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -254,7 +292,39 @@ body {
   }
 
   .muted {
-    @apply text-sm text-[var(--color-muted)];
+    @apply text-[15px] leading-relaxed text-[var(--color-muted)];
+  }
+
+  /* Крупный заголовок с плотным трекингом — основной приём типографики. */
+  .display {
+    @apply font-semibold tracking-[-0.033em];
+    font-size: clamp(2.5rem, 6.2vw, 4.5rem);
+    line-height: 1.02;
+  }
+
+  .display-sm {
+    @apply font-semibold tracking-[-0.028em];
+    font-size: clamp(1.9rem, 3.6vw, 2.75rem);
+    line-height: 1.1;
+  }
+
+  /* Надзаголовок с линией слева — вместо ещё одной центрированной плашки. */
+  .eyebrow {
+    @apply flex items-center gap-3 text-[11px] font-semibold tracking-[0.18em]
+      text-[var(--color-muted)] uppercase
+      before:h-px before:w-8 before:bg-current before:opacity-40;
+  }
+
+  /* Огромная цифра шага — работает как графика, а не как маркер списка. */
+  .numeral {
+    @apply font-semibold tracking-[-0.05em] tabular-nums;
+    font-size: clamp(3.5rem, 7vw, 5.5rem);
+    line-height: 0.8;
+  }
+
+  .night {
+    background: var(--color-night);
+    color: var(--color-night-ink);
   }
 
   /* Пятно фирменного цвета под первым экраном. Само по себе не кликается. */
@@ -271,6 +341,17 @@ body {
     @apply inline-flex items-center gap-1.5 rounded-full border
       border-[var(--color-brand)]/20 bg-[var(--color-brand-tint)] px-3 py-1
       text-xs font-medium text-[var(--color-brand)];
+  }
+
+  /* Лента прячется под градиентными краями, а не обрывается по границе экрана. */
+  .marquee-mask {
+    mask-image: linear-gradient(
+      90deg,
+      transparent,
+      #000 8%,
+      #000 92%,
+      transparent
+    );
   }
 
   /* Подчёркивание, которое дорисовывается при наведении. */
@@ -307,6 +388,43 @@ body {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+}
+
+/*
+ * Плёночное зерно поверх тёмной полосы: убирает ощущение плоской заливки.
+ * Шум нарисован SVG-фильтром прямо в CSS, отдельный файл не нужен.
+ */
+.grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* Панель продукта слегка отъезжает при прокрутке — глубина без библиотек. */
+@supports (animation-timeline: view()) {
+  .parallax-slow {
+    animation: uiren-parallax linear both;
+    animation-timeline: view();
+    animation-range: entry 0% exit 100%;
+  }
+}
+
+@keyframes uiren-parallax {
+  from {
+    transform: translateY(28px);
+  }
+  to {
+    transform: translateY(-28px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parallax-slow {
+    animation: none;
   }
 }
 

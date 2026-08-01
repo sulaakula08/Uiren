@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
@@ -9,9 +10,33 @@ import {
   IconChat,
   IconChild,
   IconPlan,
-  IconSpark,
   IconTasks,
 } from "@/components/icons";
+
+/** Заголовок собирается по словам, чтобы появление шло слева направо. */
+const HERO_WORDS = [
+  "Проверяет",
+  "работы",
+  "и",
+  "показывает,",
+  "чего",
+  "класс",
+];
+
+const SUBJECTS = [
+  "Алгебра",
+  "Геометрия",
+  "Физика",
+  "Химия",
+  "Биология",
+  "История Казахстана",
+  "Қазақ тілі",
+  "Русский язык",
+  "English",
+  "Информатика",
+  "География",
+  "Всемирная история",
+];
 
 const ROLES = [
   {
@@ -38,23 +63,23 @@ const ROLES = [
 
 const STEPS = [
   {
-    n: "1",
+    n: "01",
     title: "Учитель задаёт тему",
     text: "Пишет «квадратные уравнения, 8 класс» — платформа предлагает готовые задания. Оставить, поправить или написать своё.",
   },
   {
-    n: "2",
+    n: "02",
     title: "Ученики решают у себя",
     text: "Каждый работает в своём кабинете и записывает ход решения, а не только ответ. Именно ход и делает проверку осмысленной.",
   },
   {
-    n: "3",
+    n: "03",
     title: "Проверка идёт сама",
     text: "Балл, комментарий ученику и причина каждой ошибки: пробел в понимании, арифметика, невнимательность или списывание.",
   },
   {
-    n: "4",
-    title: "Понятно, что делать дальше",
+    n: "04",
+    title: "Понятно, что дальше",
     text: "Учитель видит разбор класса и план следующего урока. Ученик — свои пробелы. Директор — картину по школе.",
   },
 ];
@@ -98,7 +123,7 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-20 border-b border-[var(--color-line)] bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-2.5">
             <div className="grid size-8 place-items-center rounded-xl bg-[var(--color-brand)] text-sm font-semibold text-white shadow-[var(--shadow-soft)] transition-transform duration-300 hover:scale-105">
               U
@@ -117,46 +142,60 @@ export default async function LandingPage() {
       </header>
 
       <main>
-        {/* Первый экран: обещание слева, живой макет продукта справа */}
+        {/* Первый экран: текст слева, панель продукта справа — без центрирования */}
         <section className="relative overflow-hidden">
           <div
             aria-hidden
-            className="hero-blob animate-drift -top-32 -left-24 size-[420px] bg-[var(--color-brand)]/10"
+            className="hero-blob animate-drift -top-40 -left-32 size-[520px] bg-[var(--color-brand)]/12"
           />
           <div
             aria-hidden
-            className="hero-blob animate-drift top-10 -right-32 size-[380px] bg-amber-300/10"
+            className="hero-blob animate-drift top-20 -right-40 size-[420px] bg-amber-300/12"
             style={{ animationDelay: "-6s" }}
           />
 
-          <div className="relative mx-auto grid max-w-5xl items-center gap-12 px-5 pt-16 pb-16 sm:pt-24 lg:grid-cols-[1.05fr_1fr]">
-            <div className="text-center lg:text-left">
-              <p className="animate-fade overline">
-                Школьная платформа с ИИ
-              </p>
-              <h1 className="animate-rise mt-4 text-4xl leading-[1.08] font-semibold tracking-tight text-balance sm:text-[52px]">
-                Проверяет работы и показывает, чего класс{" "}
-                <span className="relative text-[var(--color-brand)]">
+          <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-6 pt-20 pb-20 sm:pt-28 lg:grid-cols-[1.1fr_1fr]">
+            <div>
+              <p className="animate-fade eyebrow">Школьная платформа с ИИ</p>
+
+              <h1 className="display mt-7 max-w-2xl text-[var(--color-ink)]">
+                {/* Пробел между span'ами настоящий: иначе заголовок
+                    читается скринридером как одно слитное слово. */}
+                {HERO_WORDS.map((word, i) => (
+                  <Fragment key={`${word}-${i}`}>
+                    <span
+                      className="animate-word inline-block"
+                      style={{ animationDelay: `${i * 65}ms` }}
+                    >
+                      {word}
+                    </span>{" "}
+                  </Fragment>
+                ))}
+                <span
+                  className="animate-word relative inline-block text-[var(--color-brand)]"
+                  style={{ animationDelay: `${HERO_WORDS.length * 65}ms` }}
+                >
                   не понял
                   <svg
                     aria-hidden
-                    viewBox="0 0 200 12"
+                    viewBox="0 0 220 14"
                     preserveAspectRatio="none"
-                    className="absolute -bottom-1 left-0 h-2.5 w-full text-[var(--color-brand)]/30"
+                    className="absolute -bottom-2 left-0 h-3 w-full text-[var(--color-brand)]/35"
                   >
                     <path
-                      d="M2 8c40-5 90-6 196-3"
+                      d="M3 9c48-6 108-7 214-4"
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth="4"
+                      strokeWidth="5"
                       strokeLinecap="round"
                     />
                   </svg>
                 </span>
               </h1>
+
               <p
-                className="animate-rise muted mx-auto mt-6 max-w-xl text-base leading-relaxed text-balance lg:mx-0"
-                style={{ animationDelay: "90ms" }}
+                className="animate-rise mt-9 max-w-lg text-[19px] leading-[1.65] text-[var(--color-ink-2)]"
+                style={{ animationDelay: "480ms" }}
               >
                 Uiren берёт на себя проверку домашних работ, планы уроков и
                 отчёты. Учитель получает обратно вечера и понятную картину
@@ -164,208 +203,235 @@ export default async function LandingPage() {
               </p>
 
               <div
-                className="animate-rise mt-8 flex flex-wrap justify-center gap-3 lg:justify-start"
-                style={{ animationDelay: "180ms" }}
+                className="animate-rise mt-9 flex flex-wrap gap-3"
+                style={{ animationDelay: "560ms" }}
               >
-                <Link href="/register/school" className="btn-primary px-5 py-3">
+                <Link
+                  href="/register/school"
+                  className="btn-primary px-6 py-3.5 text-[15px]"
+                >
                   Зарегистрировать школу
                 </Link>
-                <Link href="/register/join" className="btn-ghost px-5 py-3">
+                <Link
+                  href="/register/join"
+                  className="btn-ghost px-6 py-3.5 text-[15px]"
+                >
                   У меня есть код школы
                 </Link>
               </div>
 
               <p
-                className="animate-fade mt-4 text-xs text-[var(--color-muted)]"
-                style={{ animationDelay: "260ms" }}
+                className="animate-fade mt-5 text-[13px] text-[var(--color-muted)]"
+                style={{ animationDelay: "640ms" }}
               >
                 Регистрация занимает минуту. Обучение встроено в интерфейс.
               </p>
             </div>
 
             <div
-              className="animate-rise"
-              style={{ animationDelay: "240ms" }}
+              className="animate-rise parallax-slow"
+              style={{ animationDelay: "300ms" }}
             >
               <LandingPreview />
             </div>
           </div>
         </section>
 
-        {/* Что меняется в неделе учителя */}
-        <section className="border-y border-[var(--color-line)] bg-[var(--color-canvas)]">
-          <div className="mx-auto max-w-5xl px-5 py-16">
-            <Reveal className="text-center">
-              <h2 className="text-2xl font-semibold tracking-tight text-balance">
-                Что меняется в неделе учителя
-              </h2>
-              <p className="muted mx-auto mt-2 max-w-md">
-                Работа остаётся той же. Уходит та её часть, которую никто не
-                любит.
-              </p>
-            </Reveal>
-
-            <div className="mt-9 grid gap-4 sm:grid-cols-2">
-              <Reveal delay={80}>
-                <div className="card h-full">
-                  <p className="overline text-[var(--color-muted)]">Было</p>
-                  <ul className="mt-4 space-y-3">
-                    {BEFORE.map((item) => (
-                      <li key={item} className="flex gap-3 text-sm">
-                        <span
-                          aria-hidden
-                          className="mt-2 size-1.5 shrink-0 rounded-full bg-[var(--color-line)]"
-                        />
-                        <span className="text-[var(--color-muted)]">
-                          {item}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Reveal>
-
-              <Reveal delay={160}>
-                <div className="card h-full border-[var(--color-brand)]/25 bg-gradient-to-b from-[var(--color-brand-tint)]/50 to-white">
-                  <p className="overline text-[var(--color-brand)]">Стало</p>
-                  <ul className="mt-4 space-y-3">
-                    {AFTER.map((item) => (
-                      <li key={item} className="flex gap-3 text-sm">
-                        <svg
-                          aria-hidden
-                          viewBox="0 0 20 20"
-                          className="mt-0.5 size-4 shrink-0 text-[var(--color-brand)]"
-                        >
-                          <path
-                            d="m5 10.5 3.2 3.2L15 7"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                        <span className="text-[var(--color-ink-2)]">
-                          {item}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Reveal>
+        {/* Лента предметов — движение и охват программы одной строкой */}
+        <section className="border-y border-[var(--color-line)] bg-[var(--color-canvas)] py-5">
+          <div className="marquee-mask flex overflow-hidden">
+            <div className="animate-marquee flex shrink-0 items-center gap-3 pr-3">
+              {[...SUBJECTS, ...SUBJECTS].map((subject, i) => (
+                <span
+                  key={`${subject}-${i}`}
+                  className="shrink-0 rounded-full border border-[var(--color-line)] bg-white px-4 py-2 text-sm whitespace-nowrap text-[var(--color-ink-2)]"
+                >
+                  {subject}
+                </span>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Кому и зачем */}
-        <section className="mx-auto max-w-5xl px-5 py-16">
-          <Reveal className="text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">
+        {/* Было / стало */}
+        <section className="mx-auto max-w-6xl px-6 py-24">
+          <Reveal className="max-w-2xl">
+            <p className="eyebrow">Неделя учителя</p>
+            <h2 className="display-sm mt-5 text-balance">
+              Работа остаётся той же. Уходит та её часть, которую никто не любит
+            </h2>
+          </Reveal>
+
+          <div className="mt-12 grid gap-5 lg:grid-cols-2">
+            <Reveal delay={80}>
+              <div className="card h-full p-7">
+                <p className="text-[13px] font-semibold tracking-[0.16em] text-[var(--color-muted)] uppercase">
+                  Было
+                </p>
+                <ul className="mt-6 space-y-4">
+                  {BEFORE.map((item) => (
+                    <li key={item} className="flex gap-3.5">
+                      <span
+                        aria-hidden
+                        className="mt-2.5 size-1.5 shrink-0 rounded-full bg-[var(--color-line)]"
+                      />
+                      <span className="text-[15px] text-[var(--color-muted)]">
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+
+            <Reveal delay={160}>
+              <div className="card h-full border-[var(--color-brand)]/25 bg-gradient-to-br from-[var(--color-brand-tint)]/60 to-white p-7">
+                <p className="text-[13px] font-semibold tracking-[0.16em] text-[var(--color-brand)] uppercase">
+                  Стало
+                </p>
+                <ul className="mt-6 space-y-4">
+                  {AFTER.map((item) => (
+                    <li key={item} className="flex gap-3.5">
+                      <svg
+                        aria-hidden
+                        viewBox="0 0 20 20"
+                        className="mt-1 size-4 shrink-0 text-[var(--color-brand)]"
+                      >
+                        <path
+                          d="m5 10.5 3.2 3.2L15 7"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <span className="text-[15px] text-[var(--color-ink-2)]">
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* Тёмная полоса: четыре шага крупными цифрами */}
+        <section className="night grain relative overflow-hidden">
+          <div className="relative mx-auto max-w-6xl px-6 py-24">
+            <Reveal className="max-w-2xl">
+              <p className="eyebrow text-[var(--color-night-muted)]">
+                Как это работает
+              </p>
+              <h2 className="display-sm mt-5 text-white text-balance">
+                От темы урока до понятного вывода — четыре шага
+              </h2>
+            </Reveal>
+
+            <div className="mt-16 grid gap-x-10 gap-y-12 sm:grid-cols-2">
+              {STEPS.map((step, i) => (
+                <Reveal key={step.n} delay={i * 90}>
+                  <div className="group border-t border-white/12 pt-6">
+                    <span className="numeral block text-[var(--color-night-2)] transition-colors duration-500 group-hover:text-[var(--color-brand)]">
+                      {step.n}
+                    </span>
+                    <h3 className="mt-5 text-xl font-semibold tracking-tight text-white">
+                      {step.title}
+                    </h3>
+                    <p className="mt-2.5 max-w-sm text-[15px] leading-relaxed text-[var(--color-night-muted)]">
+                      {step.text}
+                    </p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Роли */}
+        <section className="mx-auto max-w-6xl px-6 py-24">
+          <Reveal className="max-w-2xl">
+            <p className="eyebrow">Кому это нужно</p>
+            <h2 className="display-sm mt-5 text-balance">
               Одна платформа для всей школы
             </h2>
-            <p className="muted mx-auto mt-2 max-w-md">
+            <p className="muted mt-4 text-[17px]">
               У каждого свой вход и свой экран — но данные общие, и никто ничего
               не пересылает вручную.
             </p>
           </Reveal>
 
-          <div className="mt-9 grid gap-4 sm:grid-cols-2">
+          <div className="mt-12 grid gap-5 sm:grid-cols-2">
             {ROLES.map(({ Icon, title, text }, i) => (
               <Reveal key={title} delay={i * 90}>
-                <div className="card-link group h-full">
-                  <div className="grid size-10 place-items-center rounded-xl bg-[var(--color-brand-tint)] text-[var(--color-brand)] transition-transform duration-300 group-hover:scale-110">
+                <div className="card-link group h-full p-7">
+                  <div className="grid size-11 place-items-center rounded-xl bg-[var(--color-brand-tint)] text-[var(--color-brand)] transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3">
                     <Icon className="size-5" />
                   </div>
-                  <h3 className="mt-3.5 font-semibold">{title}</h3>
-                  <p className="muted mt-1.5 leading-relaxed">{text}</p>
+                  <h3 className="mt-5 text-lg font-semibold tracking-tight">
+                    {title}
+                  </h3>
+                  <p className="muted mt-2">{text}</p>
                 </div>
               </Reveal>
             ))}
           </div>
         </section>
 
-        {/* Как это работает — четыре шага */}
-        <section className="border-y border-[var(--color-line)] bg-[var(--color-canvas)]">
-          <div className="mx-auto max-w-5xl px-5 py-16">
-            <Reveal className="text-center">
-              <h2 className="text-2xl font-semibold tracking-tight">
-                Как это работает
+        {/* Почему понятно с первого входа */}
+        <section className="border-t border-[var(--color-line)] bg-[var(--color-canvas)]">
+          <div className="mx-auto max-w-6xl px-6 py-24">
+            <Reveal className="max-w-2xl">
+              <p className="eyebrow">Внедрение</p>
+              <h2 className="display-sm mt-5 text-balance">
+                Понятно с первого входа, без обучающего семинара
               </h2>
-              <p className="muted mt-2">
-                Четыре шага — от темы урока до понятного вывода
-              </p>
             </Reveal>
 
-            <ol className="relative mt-10 space-y-6 before:absolute before:top-2 before:bottom-2 before:left-[19px] before:w-px before:bg-[var(--color-line)]">
-              {STEPS.map((step, i) => (
-                <Reveal
-                  as="li"
-                  key={step.n}
-                  delay={i * 90}
-                  className="group relative flex gap-5"
-                >
-                  <span className="z-[1] grid size-10 shrink-0 place-items-center rounded-full border border-[var(--color-line)] bg-white text-sm font-semibold text-[var(--color-brand)] shadow-[var(--shadow-soft)] transition-all duration-300 group-hover:border-[var(--color-brand)]/40 group-hover:shadow-[var(--shadow-lift)]">
-                    {step.n}
-                  </span>
-                  <div className="pt-1.5">
-                    <h3 className="font-semibold">{step.title}</h3>
-                    <p className="muted mt-1 leading-relaxed">{step.text}</p>
+            <div className="mt-12 grid gap-10 sm:grid-cols-3">
+              {FEATURES.map(({ Icon, title, text }, i) => (
+                <Reveal key={title} delay={i * 90}>
+                  <div className="border-t border-[var(--color-line)] pt-6">
+                    <Icon className="size-6 text-[var(--color-brand)]" />
+                    <h3 className="mt-4 text-lg font-semibold tracking-tight">
+                      {title}
+                    </h3>
+                    <p className="muted mt-2">{text}</p>
                   </div>
                 </Reveal>
               ))}
-            </ol>
-          </div>
-        </section>
-
-        {/* Что делает платформу понятной с первого входа */}
-        <section className="mx-auto max-w-5xl px-5 py-16">
-          <Reveal className="text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Понятно с первого входа
-            </h2>
-            <p className="muted mx-auto mt-2 max-w-md">
-              Платформу должно быть видно насквозь без обучающего семинара.
-            </p>
-          </Reveal>
-
-          <div className="mt-9 grid gap-6 sm:grid-cols-3">
-            {FEATURES.map(({ Icon, title, text }, i) => (
-              <Reveal key={title} delay={i * 90}>
-                <div className="grid size-10 place-items-center rounded-xl bg-[var(--color-brand-tint)] text-[var(--color-brand)]">
-                  <Icon className="size-5" />
-                </div>
-                <h3 className="mt-3.5 font-semibold">{title}</h3>
-                <p className="muted mt-1.5 leading-relaxed">{text}</p>
-              </Reveal>
-            ))}
+            </div>
           </div>
         </section>
 
         {/* Финальный призыв */}
-        <section className="relative overflow-hidden border-t border-[var(--color-line)] bg-[var(--color-canvas)]">
+        <section className="night grain relative overflow-hidden">
           <div
             aria-hidden
-            className="hero-blob animate-drift -bottom-40 left-1/2 size-[460px] -translate-x-1/2 bg-[var(--color-brand)]/10"
+            className="hero-blob animate-drift -bottom-52 left-1/2 size-[560px] -translate-x-1/2 bg-[var(--color-brand)]/25"
           />
-          <div className="relative mx-auto max-w-5xl px-5 py-20 text-center">
+          <div className="relative mx-auto max-w-6xl px-6 py-28 text-center">
             <Reveal>
-              <span className="badge-soft">
-                <IconSpark className="size-3.5" />
-                Начните со своей школы
-              </span>
-              <h2 className="mx-auto mt-5 max-w-xl text-3xl font-semibold tracking-tight text-balance">
+              <h2 className="display-sm mx-auto max-w-2xl text-white text-balance">
                 Первое задание можно выдать сегодня
               </h2>
-              <p className="muted mx-auto mt-3 max-w-md leading-relaxed">
+              <p className="mx-auto mt-5 max-w-md text-[17px] leading-relaxed text-[var(--color-night-muted)]">
                 Создайте школу, получите код приглашения и раздайте его
                 коллегам, ученикам и родителям. Дальше платформа проведёт всех
                 сама.
               </p>
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <Link href="/register/school" className="btn-primary px-5 py-3">
+              <div className="mt-10 flex flex-wrap justify-center gap-3">
+                <Link
+                  href="/register/school"
+                  className="btn-primary px-6 py-3.5 text-[15px]"
+                >
                   Зарегистрировать школу
                 </Link>
-                <Link href="/login" className="btn-ghost px-5 py-3">
+                <Link
+                  href="/login"
+                  className="btn inline-flex border border-white/20 bg-transparent px-6 py-3.5 text-[15px] text-white hover:bg-white/10"
+                >
                   У меня уже есть аккаунт
                 </Link>
               </div>
@@ -375,7 +441,7 @@ export default async function LandingPage() {
       </main>
 
       <footer className="border-t border-[var(--color-line)] bg-white">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-7 text-xs text-[var(--color-muted)]">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-8 text-[13px] text-[var(--color-muted)]">
           <span>Uiren — школьная платформа</span>
           <Link
             href="/login"

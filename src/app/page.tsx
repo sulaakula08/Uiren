@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { HOME_BY_ROLE } from "@/lib/auth";
 import { Reveal } from "@/components/reveal";
+import { Logo, Wordmark } from "@/components/logo";
 import { LandingPreview } from "@/components/landing-preview";
 import {
   IconChart,
@@ -124,12 +125,7 @@ export default async function LandingPage() {
     <div className="min-h-screen bg-[var(--color-surface)]">
       <header className="sticky top-0 z-20 border-b border-[var(--color-line)] bg-[var(--color-surface)]/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
-          <div className="flex items-center gap-2.5">
-            <div className="grid size-8 place-items-center rounded-xl bg-[var(--color-brand)] text-sm font-semibold text-[var(--color-on-brand)] shadow-[var(--shadow-soft)] transition-transform duration-300 hover:scale-105">
-              U
-            </div>
-            <span className="font-semibold tracking-tight">Uiren</span>
-          </div>
+          <Wordmark />
           <div className="flex items-center gap-2">
             <Link href="/login" className="btn-ghost">
               Войти
@@ -156,6 +152,9 @@ export default async function LandingPage() {
 
           <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-6 pt-20 pb-20 sm:pt-28 lg:grid-cols-[1.1fr_1fr]">
             <div>
+              {/* Знак прочерчивается при загрузке — первое, что видит гость. */}
+              <Logo className="mb-6 size-14" draw />
+
               <p className="animate-fade eyebrow">Школьная платформа с ИИ</p>
 
               <h1 className="display mt-7 max-w-2xl text-[var(--color-ink)]">

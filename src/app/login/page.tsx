@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { HOME_BY_ROLE } from "@/lib/auth";
 import { getT } from "@/lib/locale";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { Logo } from "@/components/logo";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage() {
@@ -17,11 +18,9 @@ export default async function LoginPage() {
       <div className="animate-rise w-full max-w-[400px]">
         <Link
           href="/"
-          className="mb-8 flex flex-col items-center text-center"
+          className="logo-lockup mb-8 flex flex-col items-center text-center"
         >
-          <div className="grid size-12 place-items-center rounded-2xl bg-[var(--color-brand)] text-lg font-semibold text-[var(--color-on-brand)] shadow-[var(--shadow-soft)]">
-            U
-          </div>
+          <Logo className="size-16" draw title={t("app.name")} />
           <h1 className="mt-4 text-2xl font-semibold tracking-tight">
             {t("app.name")}
           </h1>

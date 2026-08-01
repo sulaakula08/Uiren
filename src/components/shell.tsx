@@ -8,6 +8,7 @@ import { tourFor } from "@/lib/tour-steps";
 import { LocaleSwitcher } from "./locale-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
 import { IconLogout, IconSettings } from "./icons";
+import { Logo } from "./logo";
 import { NavLinks, type NavItem } from "./nav-links";
 import { Tour, TourButton } from "./tour";
 
@@ -41,10 +42,8 @@ export async function Shell({
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[248px_1fr]">
       <aside className="flex flex-col gap-6 border-b border-[var(--color-line)] bg-[var(--color-surface)] p-4 lg:sticky lg:top-0 lg:h-screen lg:border-r lg:border-b-0">
-        <Link href="/" className="flex items-center gap-2.5 px-1">
-          <div className="grid size-9 place-items-center rounded-xl bg-[var(--color-brand)] text-sm font-semibold text-[var(--color-on-brand)]">
-            U
-          </div>
+        <Link href="/" className="logo-lockup flex items-center gap-2.5 px-1">
+          <Logo className="size-9" title={t("app.name")} />
           <span className="text-[15px] font-semibold tracking-tight">
             {t("app.name")}
           </span>

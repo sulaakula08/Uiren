@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { getLocale } from "@/lib/locale";
 import { DEFAULT_THEME, THEME_COOKIE, isTheme } from "@/lib/theme";
+import { LogoGradient } from "@/components/logo";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,7 +23,10 @@ export default async function RootLayout({
   // Тема проставляется на сервере — страница приходит уже в нужных цветах.
   return (
     <html lang={locale} data-theme={theme}>
-      <body>{children}</body>
+      <body>
+        <LogoGradient />
+        {children}
+      </body>
     </html>
   );
 }

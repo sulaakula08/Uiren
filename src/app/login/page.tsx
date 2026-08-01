@@ -6,12 +6,14 @@ import { getT } from "@/lib/locale";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { Logo } from "@/components/logo";
 import { LoginForm } from "./login-form";
+import { GoogleButton } from "./google-button";
 
 export default async function LoginPage() {
   const session = await getSession();
   if (session) redirect(HOME_BY_ROLE[session.role]);
 
   const { t, locale } = await getT();
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-canvas)] px-5 py-10">
@@ -41,6 +43,9 @@ export default async function LoginPage() {
               error: t("auth.error"),
             }}
           />
+
+          {/* Кнопка появляется только если вход через Google настроен. */}
+          {googleClientId && <GoogleButton clientId={googleClientId} />}
         </div>
 
         <p className="muted mt-5 text-center text-sm">

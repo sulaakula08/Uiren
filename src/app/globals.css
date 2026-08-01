@@ -88,6 +88,58 @@ body {
   }
 }
 
+/* Медленный дрейф пятен под первым экраном. */
+@keyframes uiren-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, -3%, 0) scale(1.08);
+  }
+}
+
+/* Заполнение полосы прогресса от нуля до заданной ширины. */
+@keyframes uiren-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Курсор набора текста у тьютора. */
+@keyframes uiren-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Тонкий блик по кнопке — «живая», но не мигающая. */
+@keyframes uiren-sheen {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes uiren-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
 @utility animate-rise {
   animation: uiren-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -102,6 +154,23 @@ body {
 
 @utility animate-ring {
   animation: uiren-pulse-ring 1.8s ease-out infinite;
+}
+
+@utility animate-drift {
+  animation: uiren-drift 18s ease-in-out infinite;
+}
+
+@utility animate-grow {
+  animation: uiren-grow 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: left;
+}
+
+@utility animate-blink {
+  animation: uiren-blink 1.1s step-end infinite;
+}
+
+@utility animate-float {
+  animation: uiren-float 6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -186,5 +255,86 @@ body {
 
   .muted {
     @apply text-sm text-[var(--color-muted)];
+  }
+
+  /* Пятно фирменного цвета под первым экраном. Само по себе не кликается. */
+  .hero-blob {
+    @apply pointer-events-none absolute rounded-full blur-3xl;
+  }
+
+  /* Стеклянная панель для макета продукта на первом экране. */
+  .surface {
+    @apply rounded-2xl border border-[var(--color-line)] bg-white/80 backdrop-blur-sm;
+  }
+
+  .badge-soft {
+    @apply inline-flex items-center gap-1.5 rounded-full border
+      border-[var(--color-brand)]/20 bg-[var(--color-brand-tint)] px-3 py-1
+      text-xs font-medium text-[var(--color-brand)];
+  }
+
+  /* Подчёркивание, которое дорисовывается при наведении. */
+  .link-underline {
+    @apply relative after:absolute after:-bottom-0.5 after:left-0 after:h-px
+      after:w-0 after:bg-current after:transition-[width] after:duration-300
+      hover:after:w-full;
+  }
+}
+
+/*
+ * Появление блока при прокрутке — чистый CSS, без JS.
+ *
+ * База: обычная анимация появления при загрузке. Она же — запасной вариант
+ * для браузеров без scroll-driven анимаций. Важно, что блок никогда не остаётся
+ * в opacity: 0 навсегда: контент виден даже если анимации не сработали.
+ */
+.reveal {
+  animation: uiren-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+/* Где поддерживается — привязываем ту же анимацию к прокрутке. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation-delay: 0ms;
+    animation-timeline: view();
+    animation-range: entry 0% cover 24%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Блик проходит по главной кнопке при наведении. */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgb(255 255 255 / 0.22) 50%,
+    transparent 80%
+  );
+  transform: translateX(-120%);
+}
+
+.btn-primary:hover::after {
+  animation: uiren-sheen 0.9s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary:hover::after {
+    animation: none;
   }
 }

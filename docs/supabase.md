@@ -5,8 +5,8 @@ PostgreSQL, поэтому переносить руками ничего не �
 таблицы сама из `prisma/schema.prisma`. Ниже — что поменять и в каком порядке.
 
 > **Важно про регион.** В README зафиксировано требование держать данные
-> школьников на серверах в РК. У Supabase нет региона в Казахстане — ближайшие
-> это `eu-central-1` (Франкфурт) и `ap-southeast-1`. Для пилота это приемлемо,
+> школьников на серверах в РК. Проект поднят в `ap-southeast-1` (Сингапур) —
+> региона в Казахстане у Supabase нет. Для пилота это приемлемо,
 > для боевого запуска с реальными школами — нет. Решите это до того, как в базу
 > попадут настоящие ученики.
 
@@ -84,19 +84,15 @@ SUBMITTED, AI_REVIEWED, TEACHER_APPROVED) · `MessageStatus` (DRAFT, SENT).
 
 ---
 
-## 3. Переключить Prisma на Postgres
+## 3. Прописать строки подключения
 
-В `prisma/schema.prisma`:
+Схема уже переведена на Postgres (`prisma/schema.prisma`) — менять её не нужно.
+Остаётся создать `.env` из `.env.example` и подставить пароль базы.
 
-```prisma
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
-```
-
-В `.env` (файл в `.gitignore`, в репозиторий не попадёт):
+> **Именно `.env`, а не `.env.local`.** Next.js читает оба файла, но Prisma CLI
+> (`migrate`, `generate`, `seed`) читает только `.env`. Если положить строки в
+> `.env.local`, приложение поднимется, а миграции упадут с
+> `Environment variable not found: DIRECT_URL`.
 
 ```bash
 DATABASE_URL="postgresql://postgres.PROJECT:PASSWORD@aws-0-REGION.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
@@ -107,64 +103,50 @@ DIRECT_URL="postgresql://postgres.PROJECT:PASSWORD@aws-0-REGION.pooler.supabase.
 которых пулер в transaction-режиме не поддерживает, и запросы начнут падать с
 `prepared statement "s0" already exists`.
 
-Пароль с спецсимволами нужно URL-кодировать (`@` → `%40`, `#` → `%23`).
+Пароль со спецсимволами нужно URL-кодировать (`@` → `%40`, `#` → `%23`,
+`/` → `%2F`).
 
 ---
 
 ## 4. Создать таблицы
 
-```bash
-npx prisma migrate dev --name init
-```
-
-Команда создаст папку `prisma/migrations` с SQL, применит его к Supabase и
-перегенерирует клиент. Эту папку нужно закоммитить — на проде разворачивать
-командой `npx prisma migrate deploy`.
-
-Если хочется просто накатить схему без истории миграций:
+Миграции уже лежат в `prisma/migrations`, поэтому достаточно накатить их:
 
 ```bash
-npx prisma db push
+npm run db:deploy
 ```
 
-Для пилота этого хватит, но для продакшена лучше миграции: `db push` не умеет
-откатываться и не оставляет следа, что именно менялось.
+Две миграции:
+
+- `20260801000000_init` — 16 таблиц, 5 enum-типов, 28 внешних ключей.
+- `20260801000001_enable_rls` — включает RLS (см. следующий раздел).
+
+На Windows команда может упасть с `EPERM ... query_engine-windows.dll.node`:
+это значит, что запущен `npm run dev` и держит файл движка. Остановите дев-сервер
+и повторите.
+
+Дальше, когда схема будет меняться, новая миграция создаётся так:
+
+```bash
+npm run db:migrate -- --name что_поменялось
+```
 
 ---
 
-## 5. Закрыть таблицы от публичного доступа
+## 5. Закрытие таблиц от публичного доступа
 
-**Это обязательный шаг, а не рекомендация.** Supabase автоматически публикует
-всю схему `public` через PostgREST. Пока на таблице не включён RLS, любой, кто
-знает URL проекта и anon-ключ (а он лежит в браузере на клиенте), может прочитать
-её целиком — включая `User` с `passwordHash` и всеми почтами учеников.
+**Уже сделано миграцией**, но важно понимать зачем — этот шаг легко потерять при
+развёртывании новой среды.
 
-Приложение ходит в базу через Prisma под ролью `postgres`, которая RLS
-игнорирует. Значит, можно включить RLS **без единой политики**: приложение
-продолжит работать, а анонимный доступ закроется полностью.
+Supabase публикует всю схему `public` через PostgREST. Пока на таблице не включён
+RLS, её читает любой, у кого есть URL проекта и anon-ключ (а он лежит в браузере
+на клиенте) — включая `User` с `passwordHash` и почтами всех учеников.
 
-В SQL Editor:
+Приложение ходит в базу через Prisma под ролью-владельцем, которая RLS
+игнорирует. Поэтому RLS включён **без единой политики**: анонимный доступ закрыт
+полностью, а приложение работает как прежде.
 
-```sql
-alter table "School"            enable row level security;
-alter table "User"              enable row level security;
-alter table "ParentLink"        enable row level security;
-alter table "Subject"           enable row level security;
-alter table "ClassGroup"        enable row level security;
-alter table "Enrollment"        enable row level security;
-alter table "TeacherAssignment" enable row level security;
-alter table "Topic"             enable row level security;
-alter table "Lesson"            enable row level security;
-alter table "Assignment"        enable row level security;
-alter table "Submission"        enable row level security;
-alter table "Finding"           enable row level security;
-alter table "ParentMessage"     enable row level security;
-alter table "TutorSession"      enable row level security;
-alter table "TutorMessage"      enable row level security;
-alter table "AiLog"             enable row level security;
-```
-
-Проверить, что не осталось открытых таблиц:
+Проверить, что открытых таблиц не осталось:
 
 ```sql
 select tablename, rowsecurity
@@ -173,19 +155,47 @@ where schemaname = 'public'
 order by rowsecurity, tablename;
 ```
 
-Все строки должны быть с `rowsecurity = true`.
+Во всех строках должно быть `rowsecurity = true`.
+
+---
+
+## 5.1. Переменные окружения на Vercel
+
+Файл `.env` в репозиторий не попадает, поэтому те же четыре значения нужно
+завести в **Project Settings → Environment Variables**:
+
+| Переменная | Значение |
+| --- | --- |
+| `DATABASE_URL` | строка с портом 6543 и `pgbouncer=true` |
+| `DIRECT_URL` | строка с портом 5432 |
+| `AUTH_SECRET` | 64 hex-символа, свой для прода |
+| `ANTHROPIC_API_KEY` | ключ Claude API |
+
+`AUTH_SECRET` на проде должен отличаться от локального: этим ключом подписываются
+сессионные cookie.
+
+Команда сборки уже включает `prisma migrate deploy`, поэтому при деплое таблицы
+создадутся сами. Если `DIRECT_URL` не задан, сборка упадёт с понятной ошибкой —
+это лучше, чем молча выкатить приложение без базы.
 
 ---
 
 ## 6. Демо-данные
 
+> **Осторожно: `prisma/seed.ts` сначала очищает базу.** Первым делом он делает
+> `deleteMany()` по всем 16 таблицам, и только потом создаёт демо-школу. Он
+> работает через того же Prisma-клиента, то есть после переезда бьёт **по
+> Supabase**, а не по локальному файлу. Один запуск на проде сотрёт все школы,
+> аккаунты и работы учеников.
+>
+> Запускать только на пустой или заведомо ненужной базе:
+
 ```bash
 npm run db:demo
 ```
 
-Скрипт `prisma/seed.ts` работает через того же Prisma-клиента, поэтому после
-смены `DATABASE_URL` он наполнит уже Supabase. На боевой базе его запускать не
-нужно.
+Демо-аккаунты создаются с паролем `uiren2026` — на боевой базе таких быть не
+должно.
 
 ---
 

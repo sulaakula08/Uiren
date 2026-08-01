@@ -1,14 +1,17 @@
 // Uiren — интеллектуальный слой поверх школьной инфраструктуры.
-// SQLite для локальной разработки; для продакшена меняется на postgresql
-// (серверы в РК — архитектурное требование, а не пункт roadmap).
+// PostgreSQL (Supabase) — одна и та же СУБД локально и на проде.
+// Порядок переезда и обязательный шаг с RLS описаны в docs/supabase.md.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
+  // Пул в transaction-режиме (порт 6543) — для приложения.
+  url = env("DATABASE_URL")
+  // Session-режим (порт 5432) — только для миграций: DDL через transaction-пул не проходит.
+  directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────────────────── Организация

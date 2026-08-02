@@ -118,22 +118,44 @@ async function parentContacts(parentId: string) {
   });
   if (links.length === 0) return [];
 
-  const out = new Map<string, { id: string; fullName: string; role: string; relation: string }>();
+  const nameByStudent = new Map(
+    links.map((l) => [l.studentId, l.student.fullName]),
+  );
 
-  for (const link of links) {
-    const enrollments = await db.enrollment.findMany({
-      where: { studentId: link.studentId },
-      select: { classId: true },
-    });
-    const teachers = await db.teacherAssignment.findMany({
-      where: { classId: { in: enrollments.map((e) => e.classId) } },
-      select: {
-        teacher: { select: { id: true, fullName: true } },
-        subject: { select: { name: true } },
-      },
-    });
-    for (const t of teachers) {
-      const relation = `${t.subject.name} · ${link.student.fullName}`;
+  // Раньше здесь был цикл с двумя запросами на каждого ребёнка. У родителя
+  // троих детей это шесть обращений к базе подряд — на задержке до Сингапура
+  // страница переставала укладываться в лимит времени.
+  const enrollments = await db.enrollment.findMany({
+    where: { studentId: { in: [...nameByStudent.keys()] } },
+    select: { studentId: true, classId: true },
+  });
+  if (enrollments.length === 0) return [];
+
+  const teachers = await db.teacherAssignment.findMany({
+    where: { classId: { in: enrollments.map((e) => e.classId) } },
+    select: {
+      classId: true,
+      teacher: { select: { id: true, fullName: true } },
+      subject: { select: { name: true } },
+    },
+  });
+
+  const studentsByClass = new Map<string, string[]>();
+  for (const e of enrollments) {
+    studentsByClass.set(e.classId, [
+      ...(studentsByClass.get(e.classId) ?? []),
+      e.studentId,
+    ]);
+  }
+
+  const out = new Map<
+    string,
+    { id: string; fullName: string; role: string; relation: string }
+  >();
+
+  for (const t of teachers) {
+    for (const studentId of studentsByClass.get(t.classId) ?? []) {
+      const relation = `${t.subject.name} · ${nameByStudent.get(studentId)}`;
       const existing = out.get(t.teacher.id);
       if (existing) {
         if (!existing.relation.includes(relation)) {
@@ -157,32 +179,28 @@ export async function listContacts(
   userId: string,
   role: string,
 ): Promise<Contact[]> {
-  const base =
+  // Оба запроса не зависят друг от друга. При задержке до базы в сотни
+  // миллисекунд последовательный вызов удваивал время отрисовки страницы.
+  const [base, messages] = await Promise.all([
     role === "TEACHER"
-      ? await teacherContacts(userId)
+      ? teacherContacts(userId)
       : role === "STUDENT"
-        ? await studentContacts(userId)
+        ? studentContacts(userId)
         : role === "PARENT"
-          ? await parentContacts(userId)
-          : [];
+          ? parentContacts(userId)
+          : Promise.resolve([]),
+    db.chatMessage.findMany({
+      where: { OR: [{ senderId: userId }, { recipientId: userId }] },
+      select: {
+        senderId: true,
+        recipientId: true,
+        createdAt: true,
+        readAt: true,
+      },
+    }),
+  ]);
 
   if (base.length === 0) return [];
-
-  const ids = base.map((c) => c.id);
-  const messages = await db.chatMessage.findMany({
-    where: {
-      OR: [
-        { senderId: userId, recipientId: { in: ids } },
-        { recipientId: userId, senderId: { in: ids } },
-      ],
-    },
-    select: {
-      senderId: true,
-      recipientId: true,
-      createdAt: true,
-      readAt: true,
-    },
-  });
 
   return base
     .map((c) => {
@@ -208,36 +226,90 @@ export async function listContacts(
 }
 
 /**
- * Проверка права переписки. Вызывается перед каждой отправкой и перед
- * открытием ветки: список собеседников на клиенте подделать можно, эту — нет.
+ * Проверка права переписки — точечным запросом, а не построением всего списка.
+ *
+ * Раньше здесь вызывался listContacts(), то есть ради одного «да/нет»
+ * выгружались все ученики учителя с их родителями. При отправке каждого
+ * сообщения это давало лишние обращения к базе, а с задержкой до Сингапура
+ * отправка переставала укладываться в лимит времени серверной функции.
  */
 export async function canMessage(
   userId: string,
   role: string,
   otherId: string,
 ): Promise<boolean> {
-  if (userId === otherId) return false;
-  const contacts = await listContacts(userId, role);
-  return contacts.some((c) => c.id === otherId);
+  if (!otherId || userId === otherId) return false;
+
+  const other = await db.user.findUnique({
+    where: { id: otherId },
+    select: { id: true, role: true },
+  });
+  if (!other) return false;
+
+  // Приводим пару к виду «учитель — второй участник»: разрешённые сочетания
+  // всегда включают учителя, поэтому остальные отсекаются сразу.
+  const teacherId =
+    role === "TEACHER" ? userId : other.role === "TEACHER" ? other.id : null;
+  const otherRole = role === "TEACHER" ? other.role : role;
+  const counterpartId = role === "TEACHER" ? other.id : userId;
+  if (!teacherId) return false;
+
+  if (otherRole === "STUDENT") {
+    const found = await db.teacherAssignment.findFirst({
+      where: {
+        teacherId,
+        class: { enrollments: { some: { studentId: counterpartId } } },
+      },
+      select: { id: true },
+    });
+    return Boolean(found);
+  }
+
+  if (otherRole === "PARENT") {
+    const found = await db.teacherAssignment.findFirst({
+      where: {
+        teacherId,
+        class: {
+          enrollments: {
+            some: {
+              // Только подтверждённая связь родителя с этим учеником.
+              student: {
+                childLinks: {
+                  some: { parentId: counterpartId, status: "ACCEPTED" },
+                },
+              },
+            },
+          },
+        },
+      },
+      select: { id: true },
+    });
+    return Boolean(found);
+  }
+
+  return false;
 }
 
 /** Переписка с одним человеком. Помечает входящие прочитанными. */
 export async function openThread(userId: string, otherId: string) {
-  const messages = await db.chatMessage.findMany({
-    where: {
-      OR: [
-        { senderId: userId, recipientId: otherId },
-        { senderId: otherId, recipientId: userId },
-      ],
-    },
-    orderBy: { createdAt: "asc" },
-    take: 200,
-  });
-
-  await db.chatMessage.updateMany({
-    where: { senderId: otherId, recipientId: userId, readAt: null },
-    data: { readAt: new Date() },
-  });
+  // Отметка о прочтении не влияет на то, что мы покажем, поэтому идёт
+  // одновременно с чтением, а не после него.
+  const [messages] = await Promise.all([
+    db.chatMessage.findMany({
+      where: {
+        OR: [
+          { senderId: userId, recipientId: otherId },
+          { senderId: otherId, recipientId: userId },
+        ],
+      },
+      orderBy: { createdAt: "asc" },
+      take: 200,
+    }),
+    db.chatMessage.updateMany({
+      where: { senderId: otherId, recipientId: userId, readAt: null },
+      data: { readAt: new Date() },
+    }),
+  ]);
 
   return messages;
 }

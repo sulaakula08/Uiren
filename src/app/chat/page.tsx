@@ -22,21 +22,25 @@ export default async function ChatPage({
   const session = await requireUser();
   const { with: otherId } = await searchParams;
 
-  const contacts = await listContacts(session.userId, session.role);
+  // Список собеседников и право открыть ветку не зависят друг от друга —
+  // считаем одновременно. id в адресе легко подменить, поэтому право
+  // проверяется отдельным запросом, а не доверием к списку.
+  const [contacts, allowed] = await Promise.all([
+    listContacts(session.userId, session.role),
+    otherId
+      ? canMessage(session.userId, session.role, otherId)
+      : Promise.resolve(false),
+  ]);
 
-  // Открывать можно только разрешённую ветку — id в адресе легко подменить.
-  const allowed = otherId
-    ? await canMessage(session.userId, session.role, otherId)
-    : false;
-
-  const other = allowed
-    ? await db.user.findUnique({
-        where: { id: otherId },
-        select: { id: true, fullName: true },
-      })
-    : null;
-
-  const messages = other ? await openThread(session.userId, other.id) : [];
+  const [other, messages] = allowed
+    ? await Promise.all([
+        db.user.findUnique({
+          where: { id: otherId },
+          select: { id: true, fullName: true },
+        }),
+        openThread(session.userId, otherId!),
+      ])
+    : [null, []];
   const active = contacts.find((c) => c.id === otherId);
 
   return (

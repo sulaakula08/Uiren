@@ -19,14 +19,19 @@ export function navFor(role: Role, t: Translator): NavItem[] {
         },
         { href: "/teacher/lessons", label: t("nav.lessons"), icon: "plan" },
         { href: "/teacher/messages", label: t("nav.messages"), icon: "mail" },
+        { href: "/chat", label: "Переписка", icon: "chat" },
       ];
     case "STUDENT":
       return [
         { href: "/student", label: t("nav.overview"), icon: "home" },
         { href: "/student/tutor", label: t("nav.tutor"), icon: "chat" },
+        { href: "/chat", label: "Переписка", icon: "mail" },
       ];
     case "PARENT":
-      return [{ href: "/parent", label: t("nav.children"), icon: "child" }];
+      return [
+        { href: "/parent", label: t("nav.children"), icon: "child" },
+        { href: "/chat", label: "Переписка", icon: "mail" },
+      ];
     case "DIRECTOR":
       return [
         { href: "/director", label: t("nav.overview"), icon: "chart" },

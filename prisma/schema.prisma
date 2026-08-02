@@ -82,6 +82,10 @@ model User {
 
   aiLogs AiLog[]
 
+  // Переписка
+  sentChat     ChatMessage[] @relation("ChatSender")
+  receivedChat ChatMessage[] @relation("ChatRecipient")
+
   @@index([schoolId, role])
 }
 
@@ -326,6 +330,30 @@ model ParentMessage {
   student   User @relation("MessageAboutStudent", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([recipientId, createdAt])
+}
+
+/// Личное сообщение между двумя людьми в школе.
+///
+/// Отдельно от ParentMessage: та таблица — односторонние уведомления учителя
+/// родителю с черновиком и статусом отправки. Здесь именно диалог.
+///
+/// Ветка определяется парой участников, отдельной сущности для неё нет: в
+/// школе переписка всегда один на один, а групповые чаты сознательно не
+/// делаем — модерировать их некому.
+model ChatMessage {
+  id          String    @id @default(cuid())
+  senderId    String
+  recipientId String
+  body        String
+  createdAt   DateTime  @default(now())
+  /// Когда получатель открыл ветку. null — не прочитано.
+  readAt      DateTime?
+
+  sender    User @relation("ChatSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("ChatRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, recipientId, createdAt])
+  @@index([recipientId, readAt])
 }
 
 // ─────────────────────────────────────── AI-тьютор ученика

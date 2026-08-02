@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
+import { isJournal } from "@/lib/journal";
 
 const userSchema = z.object({
   email: z.string().email(),
@@ -67,9 +68,7 @@ export async function setJournal(
   if (!session.schoolId) return { error: "Аккаунт не привязан к школе." };
 
   const journal = String(formData.get("journal") ?? "NONE");
-  if (!["KUNDELIK", "BILIMCLASS", "EDUMARK", "NONE"].includes(journal)) {
-    return { error: "Неизвестный журнал." };
-  }
+  if (!isJournal(journal)) return { error: "Неизвестный журнал." };
 
   await db.school.update({
     where: { id: session.schoolId },

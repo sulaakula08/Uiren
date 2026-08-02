@@ -5,7 +5,9 @@ import { getT } from "@/lib/locale";
 import { db } from "@/lib/db";
 import { assignmentMastery, errorMix } from "@/lib/analytics";
 import { Bar, Empty, NatureChip } from "@/components/ui";
+import { isJournal } from "@/lib/journal";
 import type { MessageKey } from "@/lib/i18n";
+import { ExportGrades } from "./export-grades";
 import { InsightPanel } from "./insight-panel";
 import {
   ApproveControl,
@@ -44,9 +46,15 @@ export default async function AssignmentPage({
     points: number;
   }[];
 
-  const [mastery, mix] = await Promise.all([
+  const [mastery, mix, school] = await Promise.all([
     assignmentMastery(assignment.id),
     errorMix({ assignmentId: assignment.id }),
+    session.schoolId
+      ? db.school.findUnique({
+          where: { id: session.schoolId },
+          select: { journal: true },
+        })
+      : null,
   ]);
 
   const pending = assignment.submissions.filter(
@@ -135,6 +143,14 @@ export default async function AssignmentPage({
           </div>
         </section>
       )}
+
+      <ExportGrades
+        assignmentId={assignment.id}
+        journal={isJournal(school?.journal) ? school.journal : "NONE"}
+        graded={
+          assignment.submissions.filter((s) => s.status !== "DRAFT").length
+        }
+      />
 
       <section>
         <h2 className="h2 mb-4">Работы учеников</h2>

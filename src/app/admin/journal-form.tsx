@@ -2,14 +2,8 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { JOURNALS, JOURNAL_LABELS } from "@/lib/journal";
 import { setJournal, type AdminState } from "./actions";
-
-const JOURNALS = [
-  ["KUNDELIK", "Kundelik"],
-  ["BILIMCLASS", "BilimClass"],
-  ["EDUMARK", "EduMark.kz"],
-  ["NONE", "Без интеграции"],
-] as const;
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -40,9 +34,9 @@ export function JournalForm({
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-48 flex-1">
           <select name="journal" defaultValue={current} className="input">
-            {JOURNALS.map(([value, label]) => (
+            {JOURNALS.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {JOURNAL_LABELS[value]}
               </option>
             ))}
           </select>
@@ -51,8 +45,11 @@ export function JournalForm({
       </div>
 
       <p className="muted mt-2 text-xs">
-        Пока это только отметка о том, чем пользуется школа: обмена данными с
-        журналом ещё нет, оценки в него не уходят.
+        От выбора зависит формат выгрузки оценок: на странице проверенной работы
+        учитель скачивает файл сразу под этот журнал. Автоматического обмена нет
+        — открытых API у журналов не существует, и пароль учителя от госсистемы
+        платформа не спрашивает. Если журнал не выбран, учителю предлагаются все
+        форматы на выбор.
       </p>
 
       {(state.ok || state.error) && (

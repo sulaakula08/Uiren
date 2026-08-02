@@ -81,13 +81,20 @@ async function main() {
     );
   }
 
+  // Демо-связи сразу подтверждённые: иначе родительский экран в демо пустой,
+  // и посмотреть его без ручного подтверждения за ученика не получится.
   const parent = await mkUser("parent@uiren.kz", "Сауле Ахметова", "PARENT");
-  await db.parentLink.create({
-    data: { parentId: parent.id, studentId: students[0].id, relation: "мать" },
-  });
-  await db.parentLink.create({
-    data: { parentId: parent.id, studentId: students[3].id, relation: "мать" },
-  });
+  for (const child of [students[0], students[3]]) {
+    await db.parentLink.create({
+      data: {
+        parentId: parent.id,
+        studentId: child.id,
+        relation: "мать",
+        requestedById: parent.id,
+        status: "ACCEPTED",
+      },
+    });
+  }
 
   // ── Предметы и классы
 

@@ -123,6 +123,13 @@ export async function Shell({
             >
               <IconSettings className="size-4" />
             </Link>
+            {/* Боковой панели на телефоне нет, и выход раньше находился только
+                в настройках — далеко для действия, которое ищут быстро. */}
+            <LogoutButton
+              label={t("nav.logout")}
+              className="btn-ghost px-2.5 py-2"
+              iconOnly
+            />
           </div>
         </div>
 

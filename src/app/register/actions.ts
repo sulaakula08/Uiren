@@ -158,9 +158,11 @@ export async function joinSchool(
     },
   });
 
+  // Связь остаётся заявкой: почту ребёнка знает вся параллель, поэтому
+  // оценки открывает подтверждение самого ученика, а не факт регистрации.
   if (childId) {
     await db.parentLink.create({
-      data: { parentId: user.id, studentId: childId },
+      data: { parentId: user.id, studentId: childId, requestedById: user.id },
     });
   }
 

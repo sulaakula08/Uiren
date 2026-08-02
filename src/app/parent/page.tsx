@@ -5,12 +5,12 @@ import { studentGaps } from "@/lib/analytics";
 import { Empty, PageHeader, SectionHeader, Stat } from "@/components/ui";
 import { FamilyLinkForm } from "@/components/family-link-form";
 import type { MessageKey } from "@/lib/i18n";
-import { linkChild, unlinkChild } from "./actions";
+import { acceptChild, linkChild, unlinkChild } from "./actions";
 
 const LINK_LABELS = {
   label: "Почта аккаунта ребёнка",
   placeholder: "ученик@school.kz",
-  hint: "Ребёнок должен быть зарегистрирован в этой школе. Детей можно добавить сколько угодно.",
+  hint: "Ребёнок должен быть зарегистрирован в этой школе и подтвердить запрос у себя. Детей можно добавить сколько угодно.",
   submitLabel: "Добавить",
 };
 
@@ -18,7 +18,7 @@ export default async function ParentPage() {
   const session = await requireRole("PARENT");
   const { t } = await getT();
 
-  const links = await db.parentLink.findMany({
+  const allLinks = await db.parentLink.findMany({
     where: { parentId: session.userId },
     orderBy: { student: { fullName: "asc" } },
     include: {
@@ -27,6 +27,16 @@ export default async function ParentPage() {
       },
     },
   });
+
+  // Успеваемость показываем только по подтверждённым связям. Заявка сама по
+  // себе не открывает ничего — иначе проверка второй стороны была бы фикцией.
+  const links = allLinks.filter((l) => l.status === "ACCEPTED");
+  const incoming = allLinks.filter(
+    (l) => l.status === "PENDING" && l.requestedById !== session.userId,
+  );
+  const outgoing = allLinks.filter(
+    (l) => l.status === "PENDING" && l.requestedById === session.userId,
+  );
 
   const messages = await db.parentMessage.findMany({
     where: { recipientId: session.userId, status: "SENT" },
@@ -88,9 +98,83 @@ export default async function ParentPage() {
         subtitle="Оценки, пробелы и сообщения от учителей"
       />
 
+      {incoming.length > 0 && (
+        <section>
+          <SectionHeader
+            title="Запросы на связь"
+            subtitle="Ученик указал вашу почту — подтвердите, если это ваш ребёнок"
+          />
+          <div className="space-y-2">
+            {incoming.map((link) => (
+              <div
+                key={link.id}
+                className="card flex flex-wrap items-center justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium">
+                    {link.student.fullName}
+                  </p>
+                  <p className="muted text-xs">{link.student.email}</p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <form action={acceptChild}>
+                    <input type="hidden" name="linkId" value={link.id} />
+                    <button type="submit" className="btn-primary px-3 py-1.5 text-xs">
+                      Подтвердить
+                    </button>
+                  </form>
+                  <form action={unlinkChild}>
+                    <input type="hidden" name="linkId" value={link.id} />
+                    <button type="submit" className="btn-danger px-3 py-1.5 text-xs">
+                      Отклонить
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {outgoing.length > 0 && (
+        <section>
+          <SectionHeader
+            title="Ожидают подтверждения"
+            subtitle="Пока ребёнок не подтвердит запрос, оценки не открываются"
+          />
+          <div className="space-y-2">
+            {outgoing.map((link) => (
+              <div
+                key={link.id}
+                className="card flex flex-wrap items-center justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-medium">
+                    {link.student.fullName}
+                  </p>
+                  <p className="muted text-xs">{link.student.email}</p>
+                </div>
+                <form action={unlinkChild} className="shrink-0">
+                  <input type="hidden" name="linkId" value={link.id} />
+                  <button type="submit" className="btn-ghost px-3 py-1.5 text-xs">
+                    Отозвать
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {children.length === 0 ? (
         <div className="space-y-4">
-          <Empty text={t("parent.noChildren")} />
+          <Empty
+            text={
+              outgoing.length > 0
+                ? "Запрос отправлен — успеваемость появится здесь, как только ребёнок его подтвердит."
+                : t("parent.noChildren")
+            }
+          />
           <FamilyLinkForm
             action={linkChild}
             name="childEmail"
@@ -118,8 +202,8 @@ export default async function ParentPage() {
                     <form action={unlinkChild}>
                       <input
                         type="hidden"
-                        name="studentId"
-                        value={student.id}
+                        name="linkId"
+                        value={child.link.id}
                       />
                       <button
                         type="submit"

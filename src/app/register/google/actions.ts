@@ -99,9 +99,10 @@ export async function completeGoogleSignup(
     },
   });
 
+  // Как и при обычной регистрации — заявка, которую подтверждает ученик.
   if (childId) {
     await db.parentLink.create({
-      data: { parentId: user.id, studentId: childId },
+      data: { parentId: user.id, studentId: childId, requestedById: user.id },
     });
   }
 

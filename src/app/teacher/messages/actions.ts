@@ -67,11 +67,15 @@ export async function sendMessage(input: {
 }) {
   const session = await requireRole("TEACHER");
 
+  // Только подтверждённая связь: неподтверждённая заявка не должна приводить
+  // к тому, что сообщение об ученике уходит постороннему человеку.
   const link = await db.parentLink.findFirst({
-    where: { studentId: input.studentId },
+    where: { studentId: input.studentId, status: "ACCEPTED" },
   });
   if (!link) {
-    throw new Error("К этому ученику не привязан родитель.");
+    throw new Error(
+      "К этому ученику не привязан подтверждённый родитель.",
+    );
   }
 
   await db.parentMessage.create({

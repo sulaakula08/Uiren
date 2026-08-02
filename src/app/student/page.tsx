@@ -6,7 +6,7 @@ import { studentGaps } from "@/lib/analytics";
 import { Empty, PageHeader, SectionHeader, Stat } from "@/components/ui";
 import { FamilyLinkForm } from "@/components/family-link-form";
 import type { MessageKey } from "@/lib/i18n";
-import { linkParent, unlinkParent } from "./actions";
+import { acceptParent, linkParent, unlinkParent } from "./actions";
 
 export default async function StudentOverview() {
   const session = await requireRole("STUDENT");
@@ -35,6 +35,16 @@ export default async function StudentOverview() {
       include: { parent: { select: { fullName: true, email: true } } },
     }),
   ]);
+
+  // Запросы от родителей подтверждает сам ученик: это его оценки, и решение
+  // о доступе к ним не может приниматься по одному лишь знанию почты.
+  const acceptedParents = parents.filter((l) => l.status === "ACCEPTED");
+  const parentRequests = parents.filter(
+    (l) => l.status === "PENDING" && l.requestedById !== session.userId,
+  );
+  const sentRequests = parents.filter(
+    (l) => l.status === "PENDING" && l.requestedById === session.userId,
+  );
 
   const byAssignment = new Map(submissions.map((s) => [s.assignmentId, s]));
   const todo = assignments.filter((a) => {
@@ -163,9 +173,56 @@ export default async function StudentOverview() {
           subtitle="Кто видит вашу успеваемость и сообщения учителей"
         />
 
-        {parents.length > 0 && (
+        {parentRequests.length > 0 && (
+          <div className="animate-pop mb-4 rounded-2xl border border-[var(--color-warn)]/25 bg-[var(--color-warn-tint)] p-4">
+            <p className="text-sm font-medium text-[var(--color-warn)]">
+              Кто-то просит доступ к вашей успеваемости
+            </p>
+            <p className="mt-0.5 mb-3 text-xs text-[var(--color-warn)]/85">
+              Подтверждайте, только если это действительно ваш родитель. Пока вы
+              не подтвердили, он не видит ни оценок, ни пробелов.
+            </p>
+            <div className="space-y-2">
+              {parentRequests.map((link) => (
+                <div
+                  key={link.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[var(--color-surface)] px-3.5 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {link.parent.fullName}
+                    </p>
+                    <p className="muted text-xs">{link.parent.email}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <form action={acceptParent}>
+                      <input type="hidden" name="linkId" value={link.id} />
+                      <button
+                        type="submit"
+                        className="btn-primary px-3 py-1.5 text-xs"
+                      >
+                        Подтвердить
+                      </button>
+                    </form>
+                    <form action={unlinkParent}>
+                      <input type="hidden" name="linkId" value={link.id} />
+                      <button
+                        type="submit"
+                        className="btn-danger px-3 py-1.5 text-xs"
+                      >
+                        Отклонить
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {acceptedParents.length > 0 && (
           <div className="card mb-4 space-y-2">
-            {parents.map((link) => (
+            {acceptedParents.map((link) => (
               <div
                 key={link.id}
                 className="flex flex-wrap items-center justify-between gap-3 border-b pb-2 last:border-b-0 last:pb-0"
@@ -177,7 +234,7 @@ export default async function StudentOverview() {
                   <p className="muted text-xs">{link.parent.email}</p>
                 </div>
                 <form action={unlinkParent}>
-                  <input type="hidden" name="parentId" value={link.parentId} />
+                  <input type="hidden" name="linkId" value={link.id} />
                   <button
                     type="submit"
                     className="btn-danger px-3 py-1.5 text-xs"
@@ -190,12 +247,41 @@ export default async function StudentOverview() {
           </div>
         )}
 
+        {sentRequests.length > 0 && (
+          <div className="card mb-4 space-y-2">
+            {sentRequests.map((link) => (
+              <div
+                key={link.id}
+                className="flex flex-wrap items-center justify-between gap-3 border-b pb-2 last:border-b-0 last:pb-0"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    {link.parent.fullName}
+                  </p>
+                  <p className="muted text-xs">
+                    {link.parent.email} · ждём подтверждения
+                  </p>
+                </div>
+                <form action={unlinkParent}>
+                  <input type="hidden" name="linkId" value={link.id} />
+                  <button
+                    type="submit"
+                    className="btn-ghost px-3 py-1.5 text-xs"
+                  >
+                    Отозвать
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        )}
+
         <FamilyLinkForm
           action={linkParent}
           name="parentEmail"
           label="Почта аккаунта родителя"
           placeholder="родитель@mail.kz"
-          hint="Родитель должен быть зарегистрирован в этой школе по коду приглашения."
+          hint="Родитель должен быть зарегистрирован в этой школе и подтвердить запрос у себя."
           submitLabel="Подключить"
         />
       </section>

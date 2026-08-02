@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { markTourDone } from "@/app/tour-actions";
 import type { TourStep } from "@/lib/tour-steps";
 
@@ -9,6 +10,15 @@ type Rect = { top: number; left: number; width: number; height: number };
 const PAD = 8;
 const CARD_W = 340;
 const GAP = 14;
+
+/**
+ * Экраны, где тур не запускается сам.
+ *
+ * Это пошаговые мастера — они уже ведут человека за руку, и приветственная
+ * карточка поверх них только мешает: первое нажатие уходит в закрытие тура,
+ * а не в предмет или класс, который человек пытался добавить.
+ */
+const NO_AUTOSTART = ["/admin/setup", "/teacher/setup", "/register"];
 
 function readRect(target: string): Rect | null {
   const el = document.querySelector<HTMLElement>(`[data-tour="${target}"]`);
@@ -33,14 +43,16 @@ export function Tour({
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
+  const pathname = usePathname();
 
   // Небольшая задержка перед автозапуском: страница успевает отрисоваться,
   // и подсветка сразу встаёт на место, а не прыгает.
   useEffect(() => {
     if (!autoStart) return;
+    if (NO_AUTOSTART.some((path) => pathname.startsWith(path))) return;
     const timer = setTimeout(() => setOpen(true), 600);
     return () => clearTimeout(timer);
-  }, [autoStart]);
+  }, [autoStart, pathname]);
 
   useEffect(() => {
     const onOpen = () => {
@@ -139,42 +151,64 @@ export function Tour({
     );
   }
 
+  // Затемнение — четыре панели вокруг подсвеченного элемента, а не одна на
+  // весь экран. Раньше поверх подсветки лежала кнопка закрытия во весь экран:
+  // первое нажатие по подсвеченному элементу уходило в закрытие тура вместо
+  // самого действия, и элемент выглядел «неработающим».
+  const shade: React.CSSProperties[] = rect
+    ? [
+        { top: 0, left: 0, right: 0, height: Math.max(0, rect.top - PAD) },
+        { top: rect.top + rect.height + PAD, left: 0, right: 0, bottom: 0 },
+        {
+          top: rect.top - PAD,
+          left: 0,
+          width: Math.max(0, rect.left - PAD),
+          height: rect.height + PAD * 2,
+        },
+        {
+          top: rect.top - PAD,
+          left: rect.left + rect.width + PAD,
+          right: 0,
+          height: rect.height + PAD * 2,
+        },
+      ]
+    : [{ inset: 0 }];
+
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
-      {rect ? (
-        <>
-          {/* Затемнение всего экрана через огромную тень вокруг «окна» */}
-          <div
-            className="pointer-events-none fixed rounded-xl transition-all duration-300 ease-out"
-            style={{
-              top: rect.top - PAD,
-              left: rect.left - PAD,
-              width: rect.width + PAD * 2,
-              height: rect.height + PAD * 2,
-              boxShadow: "0 0 0 9999px rgb(16 24 40 / 0.6)",
-              outline: "2px solid var(--color-brand)",
-              outlineOffset: 0,
-            }}
-          />
-          <button
-            type="button"
-            aria-label="Закрыть тур"
-            className="fixed inset-0 cursor-default"
-            onClick={finish}
-          />
-        </>
-      ) : (
+    <div
+      className="pointer-events-none fixed inset-0 z-50"
+      role="dialog"
+      aria-modal="true"
+    >
+      {shade.map((style, i) => (
         <button
+          key={i}
           type="button"
           aria-label="Закрыть тур"
-          className="animate-fade fixed inset-0 cursor-default bg-[rgb(16_24_40_/_0.6)]"
+          tabIndex={i === 0 ? 0 : -1}
+          className="animate-fade pointer-events-auto fixed cursor-default bg-[rgb(16_24_40_/_0.6)]"
+          style={style}
           onClick={finish}
+        />
+      ))}
+
+      {rect && (
+        <div
+          className="pointer-events-none fixed rounded-xl transition-all duration-300 ease-out"
+          style={{
+            top: rect.top - PAD,
+            left: rect.left - PAD,
+            width: rect.width + PAD * 2,
+            height: rect.height + PAD * 2,
+            outline: "2px solid var(--color-brand)",
+            outlineOffset: 0,
+          }}
         />
       )}
 
       <div
         key={index}
-        className="animate-pop fixed rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-[0_12px_40px_rgb(16_24_40_/_0.22)]"
+        className="animate-pop pointer-events-auto fixed rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-[0_12px_40px_rgb(16_24_40_/_0.22)]"
         style={{ top: cardTop, left: cardLeft, width: CARD_W }}
       >
         <div className="mb-2.5 flex items-center gap-1.5">

@@ -82,11 +82,25 @@ model User {
   @@index([schoolId, role])
 }
 
+enum LinkStatus {
+  PENDING
+  ACCEPTED
+}
+
+/// Связь «родитель — ученик».
+///
+/// Одной почты мало: иначе любой в школе привязывается к чужому ребёнку и
+/// видит его оценки. Связь заводит одна сторона, а подтверждает другая —
+/// до подтверждения она не даёт доступа ни к чему.
 model ParentLink {
-  id        String @id @default(cuid())
+  id        String     @id @default(cuid())
   parentId  String
   studentId String
-  relation  String @default("parent")
+  relation  String     @default("parent")
+  status    LinkStatus @default(PENDING)
+  /// Кто попросил связать. Подтвердить может только вторая сторона.
+  requestedById String
+  createdAt     DateTime @default(now())
 
   parent  User @relation("AsParent", fields: [parentId], references: [id], onDelete: Cascade)
   student User @relation("AsStudent", fields: [studentId], references: [id], onDelete: Cascade)

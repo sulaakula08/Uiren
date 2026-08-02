@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { PasswordInput } from "@/components/password-input";
 import {
   changePassword,
+  requestPasswordReset,
   updateProfile,
   type SettingsState,
 } from "./actions";
@@ -144,5 +145,46 @@ export function PasswordForm() {
       <Notice state={state} />
       <Submit label="Изменить пароль" />
     </form>
+  );
+}
+
+/**
+ * Запрос на сброс пароля.
+ *
+ * Нужен ровно тогда, когда форма выше бесполезна: текущий пароль забыт.
+ * Письма платформа не шлёт, поэтому запрос уходит администратору школы —
+ * он выдаёт временный пароль лично.
+ */
+export function ResetRequest() {
+  const [state, action] = useActionState<SettingsState, FormData>(
+    async () => requestPasswordReset(),
+    {},
+  );
+
+  return (
+    <form
+      action={action}
+      className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4"
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">Забыли текущий пароль?</p>
+        <p className="muted mt-0.5">
+          Администратор школы выдаст временный — сменить его можно будет здесь же
+        </p>
+      </div>
+      <RequestSubmit />
+      <div className="w-full">
+        <Notice state={state} />
+      </div>
+    </form>
+  );
+}
+
+function RequestSubmit() {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" className="btn-ghost shrink-0" disabled={pending}>
+      {pending ? "Отправляю…" : "Запросить сброс пароля"}
+    </button>
   );
 }

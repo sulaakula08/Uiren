@@ -59,6 +59,9 @@ model User {
   avatarUrl    String?
   /// Когда пользователь прошёл обучающий тур. null — тур покажется при входе.
   tourDoneAt   DateTime?
+  /// Когда человек попросил сбросить пароль. Рассылки у платформы нет, поэтому
+  /// запрос видит администратор школы и выдаёт временный пароль лично.
+  passwordResetAt DateTime?
   createdAt    DateTime @default(now())
 
   school School? @relation(fields: [schoolId], references: [id])

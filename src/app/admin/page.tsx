@@ -4,16 +4,10 @@ import { getT } from "@/lib/locale";
 import { db } from "@/lib/db";
 import { Empty, PageHeader, SectionHeader } from "@/components/ui";
 import type { MessageKey } from "@/lib/i18n";
-import { setJournal } from "./actions";
 import { JoinCodeCard } from "./join-code-card";
+import { JournalForm } from "./journal-form";
+import { ResetPasswordButton } from "./reset-password";
 import { UserForm } from "./user-form";
-
-const JOURNALS = [
-  ["KUNDELIK", "Kundelik"],
-  ["BILIMCLASS", "BilimClass"],
-  ["EDUMARK", "EduMark.kz"],
-  ["NONE", "Без интеграции"],
-] as const;
 
 export default async function AdminPage() {
   const session = await requireRole("ADMIN");
@@ -91,24 +85,7 @@ export default async function AdminPage() {
           title={t("admin.journal")}
           subtitle={t("admin.journalHint")}
         />
-        <form action={setJournal} className="flex flex-wrap items-end gap-3">
-          <div className="min-w-48 flex-1">
-            <select
-              name="journal"
-              defaultValue={school.journal}
-              className="input"
-            >
-              {JOURNALS.map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="btn-ghost">
-            {t("common.save")}
-          </button>
-        </form>
+        <JournalForm current={school.journal} saveLabel={t("common.save")} />
       </section>
 
       <section className="mt-8" data-tour="people">
@@ -129,7 +106,9 @@ export default async function AdminPage() {
                   </th>
                   <th className="px-4 py-2.5 font-medium">{t("auth.email")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("admin.role")}</th>
-                  <th className="px-4 py-2.5 font-medium">Язык</th>
+                  <th className="px-4 py-2.5 text-right font-medium">
+                    Пароль
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -144,8 +123,22 @@ export default async function AdminPage() {
                     </td>
                     <td className="px-4 py-2.5">
                       {t(`role.${user.role}` as MessageKey)}
+                      {user.passwordResetAt && (
+                        <span className="ml-2 rounded-full bg-[var(--color-warn-tint)] px-2 py-0.5 text-[11px] font-medium text-[var(--color-warn)]">
+                          просит сброс
+                        </span>
+                      )}
                     </td>
-                    <td className="px-4 py-2.5 uppercase">{user.locale}</td>
+                    <td className="px-4 py-2.5">
+                      {user.id === session.userId ? (
+                        <p className="muted text-right text-xs">это вы</p>
+                      ) : (
+                        <ResetPasswordButton
+                          userId={user.id}
+                          requested={Boolean(user.passwordResetAt)}
+                        />
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

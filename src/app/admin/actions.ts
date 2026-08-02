@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -58,12 +59,17 @@ export async function createUser(
 }
 
 /** Журнал выбирается школой; Uiren работает поверх любого из них. */
-export async function setJournal(formData: FormData) {
+export async function setJournal(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
   const session = await requireRole("ADMIN");
-  if (!session.schoolId) return;
+  if (!session.schoolId) return { error: "Аккаунт не привязан к школе." };
 
   const journal = String(formData.get("journal") ?? "NONE");
-  if (!["KUNDELIK", "BILIMCLASS", "EDUMARK", "NONE"].includes(journal)) return;
+  if (!["KUNDELIK", "BILIMCLASS", "EDUMARK", "NONE"].includes(journal)) {
+    return { error: "Неизвестный журнал." };
+  }
 
   await db.school.update({
     where: { id: session.schoolId },
@@ -71,4 +77,55 @@ export async function setJournal(formData: FormData) {
   });
 
   revalidatePath("/admin");
+  return { ok: "Журнал сохранён." };
+}
+
+/** Понятный пароль: без похожих друг на друга символов, их диктуют вслух. */
+function temporaryPassword() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = randomBytes(10);
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+}
+
+export type ResetState = { error?: string; password?: string; name?: string };
+
+/**
+ * Сброс пароля администратором.
+ *
+ * Новый пароль показывается один раз и нигде не хранится в открытом виде —
+ * администратор передаёт его человеку лично. Это единственный путь: рассылки
+ * у платформы нет, а восстановление «по секретному вопросу» в школе означает,
+ * что аккаунт учителя откроет любой, кто знает, где он учился.
+ */
+export async function resetUserPassword(
+  _prev: ResetState,
+  formData: FormData,
+): Promise<ResetState> {
+  const session = await requireRole("ADMIN");
+  if (!session.schoolId) return { error: "Аккаунт не привязан к школе." };
+
+  const userId = String(formData.get("userId") ?? "");
+  const user = await db.user.findFirst({
+    // Ограничение по школе обязательно: иначе администратор одной школы
+    // сбрасывает пароль кому угодно во всей базе.
+    where: { id: userId, schoolId: session.schoolId },
+    select: { id: true, fullName: true, role: true },
+  });
+  if (!user) return { error: "Пользователь не найден в вашей школе." };
+
+  if (user.id === session.userId) {
+    return { error: "Свой пароль меняйте в настройках — там нужен текущий." };
+  }
+
+  const password = temporaryPassword();
+  await db.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash: await bcrypt.hash(password, 10),
+      passwordResetAt: null,
+    },
+  });
+
+  revalidatePath("/admin");
+  return { password, name: user.fullName };
 }

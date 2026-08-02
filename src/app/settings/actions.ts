@@ -93,6 +93,39 @@ export async function changePassword(
   return { ok: "Пароль изменён" };
 }
 
+/**
+ * Запрос на сброс пароля.
+ *
+ * Письма платформа не шлёт, а школьные почты часто общие или недоступны —
+ * поэтому запрос уходит не на почту, а администратору школы: он видит его у
+ * себя в панели и выдаёт временный пароль лично. Для школы это и надёжнее:
+ * человека можно узнать в лицо.
+ */
+export async function requestPasswordReset(): Promise<SettingsState> {
+  const session = await requireUser();
+
+  const user = await db.user.findUnique({
+    where: { id: session.userId },
+    select: { schoolId: true, passwordResetAt: true },
+  });
+  if (!user?.schoolId) {
+    return { error: "Ваш аккаунт не привязан к школе — сбросить пароль некому." };
+  }
+  if (user.passwordResetAt) {
+    return { ok: "Запрос уже отправлен — администратор его видит." };
+  }
+
+  await db.user.update({
+    where: { id: session.userId },
+    data: { passwordResetAt: new Date() },
+  });
+
+  revalidatePath("/admin");
+  return {
+    ok: "Запрос отправлен. Администратор школы выдаст вам временный пароль.",
+  };
+}
+
 /** Сброс отметки о пройденном туре — обучение запустится при следующем входе. */
 export async function replayTour(): Promise<void> {
   const session = await requireUser();

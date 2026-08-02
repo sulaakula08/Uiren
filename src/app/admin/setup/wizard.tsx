@@ -73,7 +73,6 @@ export function SetupWizard({
   const [subjectName, setSubjectName] = useState("");
   const [subjectNameKk, setSubjectNameKk] = useState("");
   const [className, setClassName] = useState("");
-  const [classGrade, setClassGrade] = useState("");
 
   function go(next: number) {
     setStep(next);
@@ -257,6 +256,12 @@ export function SetupWizard({
                 })}
               </div>
 
+              {/*
+                Параллель раньше вводили отдельным полем, и пока оно было
+                пустым, кнопка стояла заблокированной без единого слова —
+                со стороны это выглядело как «добавление не работает».
+                Номер и так есть в названии, поэтому берём его оттуда.
+              */}
               <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--color-line)] pt-4">
                 <input
                   value={className}
@@ -264,29 +269,14 @@ export function SetupWizard({
                   className="input min-w-40 flex-1"
                   placeholder="Свой класс, например 9Д"
                 />
-                <input
-                  value={classGrade}
-                  onChange={(e) => setClassGrade(e.target.value)}
-                  type="number"
-                  min={1}
-                  max={11}
-                  className="input w-28"
-                  placeholder="Параллель"
-                />
                 <button
                   type="button"
                   className="btn-ghost shrink-0"
-                  disabled={busy || !className.trim() || !classGrade}
+                  disabled={busy || !className.trim()}
                   onClick={() =>
                     run("class:custom", async () => {
-                      const result = await addClass({
-                        name: className,
-                        grade: Number(classGrade),
-                      });
-                      if (!result.error) {
-                        setClassName("");
-                        setClassGrade("");
-                      }
+                      const result = await addClass({ name: className });
+                      if (!result.error) setClassName("");
                       return result;
                     })
                   }
@@ -294,6 +284,9 @@ export function SetupWizard({
                   {pending === "class:custom" ? "Добавляю…" : "Добавить"}
                 </button>
               </div>
+              <p className="muted mt-2 text-xs">
+                Параллель берётся из названия: 9Д — девятый класс.
+              </p>
 
               <Problem text={problem} />
             </div>

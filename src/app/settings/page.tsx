@@ -13,8 +13,7 @@ import {
   IconShield,
 } from "@/components/icons";
 import { LogoutButton } from "@/components/logout-button";
-import { replayTour } from "./actions";
-import { PasswordForm, ProfileForm } from "./forms";
+import { PasswordForm, ProfileForm, ResetRequest } from "./forms";
 
 /** Раздел настроек: заголовок с иконкой слева, содержимое справа. */
 function Section({
@@ -103,25 +102,13 @@ export default async function SettingsPage() {
           title="Внешний вид"
           subtitle="Тема применяется сразу и запоминается на этом устройстве"
         >
+          {/* Обучающий тур запускается значком «?» в боковой панели — там же,
+              где его ищут во время работы. Дублировать его здесь незачем. */}
           <ThemeSwitcher
             current={theme}
             variant="cards"
             locale={user.locale}
           />
-
-          <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-4">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">Обучающий тур</p>
-              <p className="muted mt-0.5">
-                Пройти подсказки по интерфейсу заново
-              </p>
-            </div>
-            <form action={replayTour}>
-              <button type="submit" className="btn-ghost">
-                Показать снова
-              </button>
-            </form>
-          </div>
         </Section>
 
         <Section
@@ -130,6 +117,7 @@ export default async function SettingsPage() {
           subtitle="Смена пароля требует подтверждения текущим"
         >
           <PasswordForm />
+          <ResetRequest />
         </Section>
 
         <Section

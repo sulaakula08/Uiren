@@ -97,16 +97,21 @@ export async function removeSubject(id: string) {
 
 export async function addClass(input: {
   name: string;
-  grade: number;
+  /** Необязательна: у «9Д» параллель и так написана в названии. */
+  grade?: number;
 }): Promise<SetupState> {
   const session = await requireRole("ADMIN");
   if (!session.schoolId) return { error: "Аккаунт не привязан к школе." };
 
   const name = input.name.trim();
-  const grade = Number(input.grade);
   if (!name) return { error: "Введите название класса." };
+
+  const fromName = Number(name.match(/^\d{1,2}/)?.[0]);
+  const grade = Number(input.grade) || fromName;
   if (!grade || grade < 1 || grade > 11) {
-    return { error: "Параллель — число от 1 до 11." };
+    return {
+      error: `Не удалось понять параллель из «${name}». Название должно начинаться с номера — например 9Д.`,
+    };
   }
 
   const exists = await db.classGroup.findFirst({

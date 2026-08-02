@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import type { Role } from "@prisma/client";
@@ -61,9 +62,16 @@ export async function destroySessionCookie() {
   store.delete(COOKIE);
 }
 
-export async function getSession(): Promise<SessionPayload | null> {
-  const store = await cookies();
-  return decodeSession(store.get(COOKIE)?.value);
-}
+/**
+ * Сессия из cookie. Кеш на время запроса: проверку подписи за один рендер
+ * запрашивают и корневой макет, и макет роли, и сама страница — считать HMAC
+ * заново каждый раз незачем.
+ */
+export const getSession = cache(
+  async (): Promise<SessionPayload | null> => {
+    const store = await cookies();
+    return decodeSession(store.get(COOKIE)?.value);
+  },
+);
 
 export const SESSION_COOKIE = COOKIE;

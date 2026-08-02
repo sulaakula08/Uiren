@@ -1,7 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import type { Role } from "@prisma/client";
-import { db } from "./db";
+import { loadAccount } from "./account";
 import { getSession, type SessionPayload } from "./session";
 
 /** Домашняя страница каждой роли — единая точка правды для редиректов. */
@@ -21,10 +21,7 @@ export async function requireUser(): Promise<SessionPayload> {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const user = await db.user.findUnique({
-    where: { id: session.userId },
-    select: { id: true, role: true },
-  });
+  const user = await loadAccount(session.userId);
   // Сессия ссылается на несуществующего пользователя или роль изменилась —
   // сбрасываем cookie через route handler и отправляем на вход.
   if (!user || user.role !== session.role) redirect("/logout");

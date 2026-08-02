@@ -35,12 +35,9 @@ export default async function TeacherOverview() {
   const session = await requireRole("TEACHER");
   const { t } = await getT();
 
-  const teaching = await db.teacherAssignment.count({
-    where: { teacherId: session.userId },
-  });
-  // Без предметов и классов работать не с чем — ведём сразу в настройку.
-  if (teaching === 0) redirect("/teacher/setup");
-
+  // Раньше здесь был отдельный count по той же таблице, что и findMany ниже:
+  // лишний последовательный поход в базу перед каждым открытием обзора. Список
+  // классов отвечает на оба вопроса сразу.
   const [hours, pending, classes, assignments, lessonCount] = await Promise.all(
     [
       hoursSaved(session.userId),
@@ -67,6 +64,9 @@ export default async function TeacherOverview() {
       db.lesson.count({ where: { authorId: session.userId } }),
     ],
   );
+
+  // Без предметов и классов работать не с чем — ведём сразу в настройку.
+  if (classes.length === 0) redirect("/teacher/setup");
 
   const uniqueClasses = new Set(classes.map((c) => c.classId)).size;
   const now = new Date();

@@ -8,4 +8,14 @@ export const db =
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+/*
+ * Клиент держим на globalThis и в проде.
+ *
+ * Раньше ссылка сохранялась только в разработке — ради hot reload. Но в
+ * serverless каждый маршрут собирается в свой бандл, и без общей ссылки
+ * PrismaClient создаётся заново на каждый из них. Каждый экземпляр открывает
+ * свои подключения к пулу; когда пул заканчивается, запросы начинают ждать,
+ * а потом отваливаться — это и есть «This page couldn't load» при обновлении
+ * страницы в момент, когда предыдущий запрос ещё не завершился.
+ */
+globalForPrisma.prisma = db;

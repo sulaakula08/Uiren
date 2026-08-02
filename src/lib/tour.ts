@@ -1,11 +1,13 @@
 import "server-only";
-import { db } from "./db";
+import { loadAccount } from "./account";
 
-/** Прошёл ли пользователь обучающий тур. */
+/**
+ * Прошёл ли пользователь обучающий тур.
+ *
+ * Профиль берём из общего кеша запроса — макет всё равно только что прочитал
+ * эту же строку ради проверки роли, второй раз ходить в базу незачем.
+ */
 export async function isTourDone(userId: string): Promise<boolean> {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { tourDoneAt: true },
-  });
+  const user = await loadAccount(userId);
   return Boolean(user?.tourDoneAt);
 }

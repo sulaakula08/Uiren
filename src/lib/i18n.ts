@@ -21,7 +21,7 @@ const ru = {
   "nav.lessons": "Планы уроков",
   "nav.insights": "Аналитика",
   "nav.messages": "Сообщения",
-  "nav.tutor": "AI-тьютор",
+  "nav.tutor": "Uiren AI",
   "nav.school": "Школа",
   "nav.people": "Пользователи",
   "nav.children": "Мои дети",
@@ -118,8 +118,8 @@ const ru = {
   "student.submitted": "Работа сдана",
   "student.feedback": "Обратная связь",
   "student.tutorHint":
-    "Тьютор знает, что проходили на уроке и где вы ошибались в последних работах.",
-  "student.askTutor": "Спросить тьютора",
+    "Uiren AI знает, что проходили на уроке и где вы ошибались в последних работах.",
+  "student.askTutor": "Спросить Uiren AI",
 
   "director.title": "Панель директора",
   "director.subject": "Динамика по предметам",
@@ -162,7 +162,7 @@ const kk: Record<MessageKey, string> = {
   "nav.lessons": "Сабақ жоспарлары",
   "nav.insights": "Талдау",
   "nav.messages": "Хабарламалар",
-  "nav.tutor": "AI-тьютор",
+  "nav.tutor": "Uiren AI",
   "nav.school": "Мектеп",
   "nav.people": "Пайдаланушылар",
   "nav.children": "Менің балаларым",
@@ -261,8 +261,8 @@ const kk: Record<MessageKey, string> = {
   "student.submitted": "Жұмыс тапсырылды",
   "student.feedback": "Кері байланыс",
   "student.tutorHint":
-    "Тьютор сабақта не өткенін және соңғы жұмыстарда қай жерде қателескеніңізді біледі.",
-  "student.askTutor": "Тьюторға сұрақ қою",
+    "Uiren AI сабақта не өткенін және соңғы жұмыстарда қай жерде қателескеніңізді біледі.",
+  "student.askTutor": "Uiren AI-дан сұрау",
 
   "director.title": "Директор панелі",
   "director.subject": "Пәндер бойынша динамика",

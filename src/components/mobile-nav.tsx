@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ICONS } from "./icons";
-import type { NavItem } from "./nav-links";
+import { activeHref, type NavItem } from "./nav-links";
 
 /**
  * Нижняя панель навигации для телефона.
@@ -15,11 +15,12 @@ import type { NavItem } from "./nav-links";
 export function MobileNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
+  const current = activeHref(pathname, items);
+
   return (
     <nav className="mobile-nav lg:hidden">
       {items.map((item) => {
-        const active =
-          pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active = item.href === current;
         const Icon = NAV_ICONS[item.icon];
 
         return (

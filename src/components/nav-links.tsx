@@ -12,15 +12,32 @@ export type NavItem = {
   tourId?: string;
 };
 
+/**
+ * Какой пункт меню считать активным.
+ *
+ * Простая проверка «путь начинается с href» подсвечивала сразу два пункта:
+ * на /student/tutor под неё попадали и «Обзор» (/student), и сам тьютор.
+ * Побеждает самое длинное совпадение — то есть самый конкретный раздел.
+ */
+export function activeHref(pathname: string, items: NavItem[]): string | null {
+  const matched = items.filter(
+    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
+  );
+  if (matched.length === 0) return null;
+  return matched.reduce((best, item) =>
+    item.href.length > best.href.length ? item : best,
+  ).href;
+}
+
 export function NavLinks({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
+
+  const current = activeHref(pathname, items);
 
   return (
     <nav className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
       {items.map((item) => {
-        // Точное совпадение для корня раздела, префикс — для вложенных страниц.
-        const active =
-          pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const active = item.href === current;
         const Icon = NAV_ICONS[item.icon];
 
         return (

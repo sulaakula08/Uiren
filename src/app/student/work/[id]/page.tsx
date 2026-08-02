@@ -55,15 +55,25 @@ export default async function StudentWorkPage({
           ← {t("common.back")}
         </Link>
         <h1 className="h1 mt-1">{assignment.title}</h1>
-        <p className="muted mt-1">
+        <p className="muted mt-1 text-xs">
           {assignment.subject.name}
-          {assignment.topic ? ` · ${assignment.topic.title}` : ""} · максимум{" "}
-          {assignment.maxScore} баллов
+          {assignment.topic ? ` · ${assignment.topic.title}` : ""} ·{" "}
+          {assignment.maxScore} б.
         </p>
+        {/* Описание сворачиваем: ученику важнее сразу увидеть задания, а не
+            читать вступление. Кому нужно — раскроет. */}
         {assignment.description && (
-          <p className="mt-3 rounded-lg bg-[var(--color-surface)] px-4 py-3 text-sm">
-            {assignment.description}
-          </p>
+          <details className="group mt-3">
+            <summary className="cursor-pointer list-none text-xs font-medium text-[var(--color-brand)] hover:underline">
+              Описание работы
+              <span className="ml-1 inline-block transition-transform group-open:rotate-90">
+                ›
+              </span>
+            </summary>
+            <p className="mt-2 rounded-lg bg-[var(--color-surface)] px-4 py-3 text-sm">
+              {assignment.description}
+            </p>
+          </details>
         )}
       </header>
 

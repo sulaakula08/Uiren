@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { ErrorNature } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { AiError } from "@/lib/ai/client";
@@ -228,6 +229,71 @@ export async function approveSubmission(submissionId: string, score: number) {
     where: { id: submissionId },
     data: { status: "TEACHER_APPROVED", teacherScore: score },
   });
+
+  revalidatePath(`/teacher/assignments/${submission.assignment.id}`);
+}
+
+/**
+ * Ручная проверка — без участия модели.
+ *
+ * Нужна не только как запасной путь на случай сбоя AI. Есть работы, где
+ * учитель просто быстрее: сочинение, чертёж, задача со своей методикой. И есть
+ * учителя, которые не станут пользоваться платформой, пока не убедятся, что
+ * могут поставить балл сами. Поэтому ручной путь равноправный, а не аварийный.
+ */
+export async function gradeManually(
+  submissionId: string,
+  scores: Record<string, number>,
+  comments: Record<string, string>,
+  feedback: string,
+) {
+  const session = await requireRole("TEACHER");
+
+  const submission = await db.submission.findUnique({
+    where: { id: submissionId },
+    include: { assignment: { select: { authorId: true, id: true, tasksJson: true } } },
+  });
+  if (!submission || submission.assignment.authorId !== session.userId) {
+    throw new Error("Работа не найдена");
+  }
+
+  const tasks = JSON.parse(submission.assignment.tasksJson) as {
+    id: string;
+    points: number;
+  }[];
+
+  let total = 0;
+  const findings = tasks.map((task) => {
+    const max = task.points ?? 1;
+    // Балл за задание не может выйти за 0..max, что бы ни пришло с формы.
+    const points = Math.max(0, Math.min(max, Math.round(scores[task.id] ?? 0)));
+    total += points;
+    return {
+      taskId: task.id,
+      // Природу ошибки при ручной проверке не выдумываем: полный балл — верно,
+      // иначе оставляем нейтральное «не доделал». Учитель поясняет словами.
+      nature: points === max ? ErrorNature.CORRECT : ErrorNature.INCOMPLETE,
+      points,
+      maxPoints: max,
+      comment: comments[task.id]?.trim() ?? "",
+      concept: null,
+    };
+  });
+
+  await db.$transaction([
+    db.finding.deleteMany({ where: { submissionId } }),
+    db.submission.update({
+      where: { id: submissionId },
+      data: {
+        status: "TEACHER_APPROVED",
+        teacherScore: total,
+        aiFeedback: feedback.trim() || null,
+        aiSummary: "Проверено учителем вручную.",
+        reviewedAt: new Date(),
+        findings: { create: findings },
+      },
+    }),
+  ]);
 
   revalidatePath(`/teacher/assignments/${submission.assignment.id}`);
 }

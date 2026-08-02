@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Spinner } from "@/components/loading";
 import {
   approveSubmission,
   reviewAllPending,
@@ -37,7 +38,14 @@ export function ReviewAllButton({
           })
         }
       >
-        {busy ? `Проверяю ${pending}…` : `${label} (${pending})`}
+        {busy ? (
+          <>
+            <Spinner />
+            Проверяю {pending}…
+          </>
+        ) : (
+          `${label} (${pending})`
+        )}
       </button>
       {error && (
         <span className="text-xs text-[var(--color-danger)]">{error}</span>
@@ -72,7 +80,14 @@ export function ReviewOneButton({
           })
         }
       >
-        {busy ? "…" : label}
+        {busy ? (
+          <>
+            <Spinner className="size-3.5" />
+            Проверяю…
+          </>
+        ) : (
+          label
+        )}
       </button>
       {error && (
         <p className="mt-1 max-w-48 text-xs text-[var(--color-danger)]">
@@ -112,7 +127,7 @@ export function ApproveControl({
         disabled={busy}
         onClick={() => start(() => approveSubmission(submissionId, score))}
       >
-        {busy ? "…" : label}
+        {busy ? <Spinner className="size-3.5" /> : label}
       </button>
     </div>
   );

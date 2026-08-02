@@ -12,6 +12,7 @@ import {
   ReviewAllButton,
   ReviewOneButton,
 } from "./review-controls";
+import { ManualReview } from "./manual-review";
 
 export default async function AssignmentPage({
   params,
@@ -171,6 +172,20 @@ export default async function AssignmentPage({
                       {submission.aiSummary}
                     </p>
                   )}
+
+                  <ManualReview
+                    submissionId={submission.id}
+                    tasks={tasks}
+                    answers={
+                      JSON.parse(submission.answersJson) as Record<string, string>
+                    }
+                    initialScores={Object.fromEntries(
+                      submission.findings.map((f) => [f.taskId, f.points]),
+                    )}
+                    initialComments={Object.fromEntries(
+                      submission.findings.map((f) => [f.taskId, f.comment]),
+                    )}
+                  />
 
                   {submission.findings.length > 0 && (
                     <ul className="mt-3 space-y-2">

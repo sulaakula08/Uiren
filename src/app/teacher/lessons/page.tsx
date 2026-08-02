@@ -77,7 +77,7 @@ export default async function LessonsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <p className="font-medium">{lesson.title}</p>
                     {lesson.aiGenerated && (
-                      <span className="chip bg-[var(--color-brand-soft)] text-[var(--color-brand)]">
+                      <span className="chip bg-[var(--color-brand-tint)] text-[var(--color-brand)]">
                         AI
                       </span>
                     )}

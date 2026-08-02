@@ -103,7 +103,9 @@ export async function addClass(input: {
   const session = await requireRole("ADMIN");
   if (!session.schoolId) return { error: "Аккаунт не привязан к школе." };
 
-  const name = input.name.trim();
+  // «5к» и «10 а» — то же самое, что «5К» и «10А». Приводим к одному виду:
+  // иначе в списке заводятся две записи, которые человек считает одной.
+  const name = input.name.trim().replace(/\s+/g, "").toUpperCase();
   if (!name) return { error: "Введите название класса." };
 
   const fromName = Number(name.match(/^\d{1,2}/)?.[0]);

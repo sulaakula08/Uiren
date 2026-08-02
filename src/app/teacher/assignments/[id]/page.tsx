@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { getT } from "@/lib/locale";
 import { db } from "@/lib/db";
 import { assignmentMastery, errorMix } from "@/lib/analytics";
-import { Bar, Empty, NatureChip, Stat } from "@/components/ui";
+import { Bar, Empty, NatureChip } from "@/components/ui";
 import type { MessageKey } from "@/lib/i18n";
 import { InsightPanel } from "./insight-panel";
 import {
@@ -79,28 +79,38 @@ export default async function AssignmentPage({
         />
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Stat
-          label="Сдано работ"
-          value={assignment.submissions.length}
-          hint={`${pending} ждут проверки`}
-          tone={pending > 0 ? "warn" : "default"}
-        />
-        <Stat
-          label={t("insight.mastery")}
-          value={`${mastery.mastery}%`}
-          hint={`${mastery.earned} из ${mastery.possible} баллов`}
-          tone="brand"
-        />
-        <Stat label="Максимум за работу" value={assignment.maxScore} />
-      </div>
+      {/*
+        Раньше здесь стояли три плитки, и «Усвоение темы» повторяло то же, что
+        разбор ошибок ниже, только числом. Счётчики ушли в строку, а процент
+        переехал в заголовок разбора — туда, где он что-то объясняет.
+      */}
+      <p className="muted text-sm">
+        Сдано работ: {assignment.submissions.length}
+        {pending > 0 && ` · ${pending} ждут проверки`} · максимум за работу{" "}
+        {assignment.maxScore}
+      </p>
 
       {totalErrors > 0 && (
         <section className="card">
-          <h2 className="h2 mb-1">{t("insight.errorMix")}</h2>
-          <p className="muted mb-4 text-sm">
-            Из чего складывается результат класса
-          </p>
+          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+            <div>
+              <h2 className="h2">{t("insight.errorMix")}</h2>
+              <p className="muted mt-0.5 text-sm">
+                Из чего складывается результат класса
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-semibold text-[var(--color-brand)]">
+                {mastery.mastery}%
+              </p>
+              {/* Считается по разбору заданий, а не по итоговой оценке учителя:
+                  если учитель поставил свой балл, числа разойдутся, и без этой
+                  подписи это выглядит как ошибка. */}
+              <p className="muted text-xs">
+                {mastery.earned} из {mastery.possible} по разбору AI
+              </p>
+            </div>
+          </div>
           <div className="space-y-3">
             {mix.map((m) => (
               <div key={m.nature}>

@@ -5,9 +5,10 @@ import { db } from "@/lib/db";
 import { Empty, PageHeader, SectionHeader } from "@/components/ui";
 import type { MessageKey } from "@/lib/i18n";
 import { JoinCodeCard } from "./join-code-card";
-import { JournalForm } from "./journal-form";
 import { ResetPasswordButton } from "./reset-password";
-import { UserForm } from "./user-form";
+
+/** Пароль администратора и директора через панель не сбрасывается. */
+const PROTECTED_ROLES = new Set(["ADMIN", "DIRECTOR"]);
 
 export default async function AdminPage() {
   const session = await requireRole("ADMIN");
@@ -34,11 +35,28 @@ export default async function AdminPage() {
 
   const setupIncomplete = subjects === 0 || classes === 0;
 
+  // Четыре плитки со счётчиками спорили по весу с кодом приглашения — а код
+  // здесь главное. Строкой то же самое читается быстрее и не отвлекает.
+  const summary = [
+    `${subjects} предм.`,
+    `${classes} кл.`,
+    ...counts
+      .filter((c) => c.role !== "ADMIN")
+      .map((c) => `${c._count._all} ${t(`role.${c.role}` as MessageKey).toLowerCase()}`),
+  ].join(" · ");
+
+  const waiting = users.filter((u) => u.passwordResetAt).length;
+
   return (
     <div>
       <PageHeader
         title={t("admin.title")}
         subtitle={`${school.name}, ${school.city}`}
+        action={
+          <Link href="/admin/setup" className="btn-ghost">
+            Настройка школы
+          </Link>
+        }
       />
 
       {setupIncomplete && (
@@ -59,45 +77,22 @@ export default async function AdminPage() {
       )}
 
       <JoinCodeCard code={school.joinCode} />
-
-      <div className="mt-6 grid gap-3 sm:grid-cols-4">
-        <div className="card py-4">
-          <p className="overline">Предметы</p>
-          <p className="mt-1.5 text-2xl font-semibold">{subjects}</p>
-        </div>
-        <div className="card py-4">
-          <p className="overline">Классы</p>
-          <p className="mt-1.5 text-2xl font-semibold">{classes}</p>
-        </div>
-        {counts
-          .filter((c) => c.role !== "ADMIN")
-          .slice(0, 2)
-          .map((c) => (
-            <div key={c.role} className="card py-4">
-              <p className="overline">{t(`role.${c.role}` as MessageKey)}</p>
-              <p className="mt-1.5 text-2xl font-semibold">{c._count._all}</p>
-            </div>
-          ))}
-      </div>
-
-      <section className="card mt-8">
-        <SectionHeader
-          title={t("admin.journal")}
-          subtitle={t("admin.journalHint")}
-        />
-        <JournalForm current={school.journal} saveLabel={t("common.save")} />
-      </section>
+      <p className="muted mt-3 text-sm">{summary}</p>
 
       <section className="mt-8" data-tour="people">
         <SectionHeader
           title={t("nav.people")}
-          subtitle="Все, кто присоединился по коду школы"
+          subtitle={
+            waiting > 0
+              ? `${waiting} чел. просят сбросить пароль`
+              : "Все, кто присоединился по коду школы"
+          }
         />
 
         {users.length <= 1 ? (
           <Empty text="Пока в школе только вы. Отправьте код приглашения коллегам." />
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)]">
+          <div className="overflow-x-auto rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)]">
             <table className="w-full text-sm">
               <thead className="bg-[var(--color-canvas)] text-left">
                 <tr className="text-xs tracking-wide text-[var(--color-muted)] uppercase">
@@ -106,9 +101,7 @@ export default async function AdminPage() {
                   </th>
                   <th className="px-4 py-2.5 font-medium">{t("auth.email")}</th>
                   <th className="px-4 py-2.5 font-medium">{t("admin.role")}</th>
-                  <th className="px-4 py-2.5 text-right font-medium">
-                    Пароль
-                  </th>
+                  <th className="px-4 py-2.5 text-right font-medium">Пароль</th>
                 </tr>
               </thead>
               <tbody>
@@ -132,6 +125,10 @@ export default async function AdminPage() {
                     <td className="px-4 py-2.5">
                       {user.id === session.userId ? (
                         <p className="muted text-right text-xs">это вы</p>
+                      ) : PROTECTED_ROLES.has(user.role) ? (
+                        <p className="muted text-right text-xs">
+                          меняет только сам
+                        </p>
                       ) : (
                         <ResetPasswordButton
                           userId={user.id}
@@ -145,14 +142,6 @@ export default async function AdminPage() {
             </table>
           </div>
         )}
-      </section>
-
-      <section className="mt-8">
-        <SectionHeader
-          title={t("admin.addUser")}
-          subtitle="Обычно достаточно кода приглашения — этот способ на случай, если человеку нужен готовый аккаунт"
-        />
-        <UserForm />
       </section>
     </div>
   );

@@ -201,3 +201,29 @@ export function exportFileName(target: ExportTarget, assignment: string) {
     .slice(0, 40);
   return `${target.toLowerCase()}-${safe || "ocenki"}-${isoDate(new Date())}.csv`;
 }
+
+/**
+ * Значение заголовка Content-Disposition.
+ *
+ * Заголовки HTTP — байтовые строки latin-1, и кириллица в них не помещается:
+ * попытка положить название работы в `filename` роняет весь ответ с 500, ещё
+ * до того, как браузер увидит хоть байт файла. По RFC 5987 имя идёт дважды —
+ * ASCII-запаска в `filename` и настоящее имя в `filename*`.
+ */
+export function contentDisposition(fileName: string): string {
+  // Нелатинское из запаски выбрасываем целиком, а не заменяем подчёркиваниями:
+  // «kundelik-n-2026-08-02.csv» человек прочтёт, ряд подчёркиваний — нет.
+  const ascii =
+    fileName
+      .replace(/[^\x20-\x7E]/g, "")
+      .replace(/["\\]/g, "")
+      .replace(/-{2,}/g, "-")
+      .replace(/-+\./g, ".")
+      .replace(/^-+/, "") || "export.csv";
+
+  return [
+    "attachment",
+    `filename="${ascii}"`,
+    `filename*=UTF-8''${encodeURIComponent(fileName)}`,
+  ].join("; ");
+}

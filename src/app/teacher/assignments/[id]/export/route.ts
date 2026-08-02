@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import {
+  contentDisposition,
   exportFileName,
   isExportTarget,
   toCsv,
@@ -72,10 +73,9 @@ export async function GET(
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${exportFileName(
-        target,
-        assignment.title,
-      )}"`,
+      "Content-Disposition": contentDisposition(
+        exportFileName(target, assignment.title),
+      ),
       "Cache-Control": "no-store",
     },
   });

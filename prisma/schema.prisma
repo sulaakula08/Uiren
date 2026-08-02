@@ -4,6 +4,9 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Запросы компилирует сам клиент, движок на Rust не нужен. На serverless это
+  // убирает загрузку нативного бинарника при каждом холодном старте.
+  engineType = "client"
 }
 
 datasource db {

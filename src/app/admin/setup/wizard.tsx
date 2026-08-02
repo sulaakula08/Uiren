@@ -36,6 +36,16 @@ const STEPS = [
   { title: "Приглашения", hint: "Как коллеги и семьи заведут аккаунты" },
 ];
 
+/** Ошибка под формой: без неё неудачное действие выглядит как «ничего не произошло». */
+function Problem({ text }: { text: string | null }) {
+  if (!text) return null;
+  return (
+    <p className="animate-pop mt-3 rounded-xl bg-[var(--color-danger-tint)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">
+      {text}
+    </p>
+  );
+}
+
 export function SetupWizard({
   initialStep,
   subjects,
@@ -53,13 +63,42 @@ export function SetupWizard({
   const [busy, start] = useTransition();
   const [copied, setCopied] = useState(false);
 
+  /** Что именно сейчас отправляется — подсвечиваем нажатую кнопку, а не все. */
+  const [pending, setPending] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  // Поля контролируемые: после успешного добавления их надо очистить. Пока они
+  // были обычными, текст оставался на месте, добавление выглядело несработавшим
+  // — и предмет заводили повторно, по копии на каждое нажатие.
+  const [subjectName, setSubjectName] = useState("");
+  const [subjectNameKk, setSubjectNameKk] = useState("");
+  const [className, setClassName] = useState("");
+  const [classGrade, setClassGrade] = useState("");
+
   function go(next: number) {
     setStep(next);
+    setProblem(null);
     start(() => saveStep(next));
+  }
+
+  /** Помечаем, что именно выполняется, и показываем ответ действия. */
+  function run(key: string, action: () => Promise<{ error?: string } | void>) {
+    setPending(key);
+    setProblem(null);
+    start(async () => {
+      const result = await action();
+      setPending(null);
+      setProblem(result?.error ?? null);
+    });
   }
 
   const canLeaveStep0 = subjects.length > 0;
   const canLeaveStep1 = classes.length > 0;
+
+  const presetsLeft = SUBJECT_PRESETS.filter(
+    ([name]) =>
+      !subjects.some((s) => s.name.toLowerCase() === name.toLowerCase()),
+  );
 
   return (
     <div>
@@ -97,7 +136,7 @@ export function SetupWizard({
         })}
       </ol>
 
-      <div key={step} className="animate-rise">
+      <div className="animate-rise">
         <h2 className="h2">{STEPS[step].title}</h2>
         <p className="muted mt-1 mb-5">{STEPS[step].hint}</p>
 
@@ -105,48 +144,74 @@ export function SetupWizard({
           <div className="space-y-4">
             <div className="card">
               <p className="label">Добавить готовые</p>
-              <div className="flex flex-wrap gap-2">
-                {SUBJECT_PRESETS.filter(
-                  ([name]) => !subjects.some((s) => s.name === name),
-                ).map(([name, nameKk]) => (
-                  <form key={name} action={addSubject}>
-                    <input type="hidden" name="name" value={name} />
-                    <input type="hidden" name="nameKk" value={nameKk} />
+              {presetsLeft.length === 0 ? (
+                <p className="muted text-sm">
+                  Все готовые предметы уже добавлены — ниже можно завести свой.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {presetsLeft.map(([name, nameKk]) => (
                     <button
-                      type="submit"
-                      className="chip border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-2)] transition-colors hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
+                      key={name}
+                      type="button"
+                      disabled={busy}
+                      onClick={() =>
+                        run(`subject:${name}`, () => addSubject({ name, nameKk }))
+                      }
+                      className="chip border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-[var(--color-ink-2)] transition-colors hover:border-[var(--color-brand)] hover:text-[var(--color-brand)] disabled:opacity-50"
                     >
-                      + {name}
+                      {pending === `subject:${name}` ? "…" : `+ ${name}`}
                     </button>
-                  </form>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
-              <form
-                action={addSubject}
-                className="mt-4 flex gap-2 border-t border-[var(--color-line)] pt-4"
-              >
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--color-line)] pt-4">
                 <input
-                  name="name"
-                  className="input"
+                  value={subjectName}
+                  onChange={(e) => setSubjectName(e.target.value)}
+                  className="input min-w-40 flex-1"
                   placeholder="Свой предмет"
-                  required
                 />
                 <input
-                  name="nameKk"
-                  className="input"
+                  value={subjectNameKk}
+                  onChange={(e) => setSubjectNameKk(e.target.value)}
+                  className="input min-w-40 flex-1"
                   placeholder="Название на казахском"
                 />
-                <button type="submit" className="btn-ghost shrink-0">
-                  Добавить
+                <button
+                  type="button"
+                  className="btn-ghost shrink-0"
+                  disabled={busy || !subjectName.trim()}
+                  onClick={() =>
+                    run("subject:custom", async () => {
+                      const result = await addSubject({
+                        name: subjectName,
+                        nameKk: subjectNameKk,
+                      });
+                      if (!result.error) {
+                        setSubjectName("");
+                        setSubjectNameKk("");
+                      }
+                      return result;
+                    })
+                  }
+                >
+                  {pending === "subject:custom" ? "Добавляю…" : "Добавить"}
                 </button>
-              </form>
+              </div>
+
+              <Problem text={problem} />
             </div>
 
             <ItemList
               items={subjects}
               emptyText="Пока не добавлен ни один предмет"
-              onRemove={removeSubject}
+              busy={busy}
+              pending={pending}
+              onRemove={(item) =>
+                run(`remove:${item.id}`, () => removeSubject(item.id))
+              }
             />
           </div>
         )}
@@ -156,66 +221,91 @@ export function SetupWizard({
             <div className="card">
               <p className="label">Добавить готовые</p>
               <div className="space-y-2">
-                {GRADES.map((grade) => (
-                  <div key={grade} className="flex items-center gap-2">
-                    <span className="w-10 shrink-0 text-sm font-medium text-[var(--color-muted)]">
-                      {grade}
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {LETTERS.map((letter) => {
-                        const name = `${grade}${letter}`;
-                        if (classes.some((c) => c.name === name)) return null;
-                        return (
-                          <form key={name} action={addClass}>
-                            <input type="hidden" name="name" value={name} />
-                            <input
-                              type="hidden"
-                              name="grade"
-                              value={String(grade)}
-                            />
+                {GRADES.map((grade) => {
+                  const left = LETTERS.filter(
+                    (letter) =>
+                      !classes.some((c) => c.name === `${grade}${letter}`),
+                  );
+                  if (left.length === 0) return null;
+                  return (
+                    <div key={grade} className="flex items-center gap-2">
+                      <span className="w-10 shrink-0 text-sm font-medium text-[var(--color-muted)]">
+                        {grade}
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {left.map((letter) => {
+                          const name = `${grade}${letter}`;
+                          return (
                             <button
-                              type="submit"
-                              className="chip border border-[var(--color-line)] bg-[var(--color-surface)] text-[var(--color-ink-2)] transition-colors hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
+                              key={name}
+                              type="button"
+                              disabled={busy}
+                              onClick={() =>
+                                run(`class:${name}`, () =>
+                                  addClass({ name, grade }),
+                                )
+                              }
+                              className="chip border border-[var(--color-line)] bg-[var(--color-surface)] px-3 py-1.5 text-[var(--color-ink-2)] transition-colors hover:border-[var(--color-brand)] hover:text-[var(--color-brand)] disabled:opacity-50"
                             >
-                              + {name}
+                              {pending === `class:${name}` ? "…" : `+ ${name}`}
                             </button>
-                          </form>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              <form
-                action={addClass}
-                className="mt-4 flex gap-2 border-t border-[var(--color-line)] pt-4"
-              >
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--color-line)] pt-4">
                 <input
-                  name="name"
-                  className="input"
+                  value={className}
+                  onChange={(e) => setClassName(e.target.value)}
+                  className="input min-w-40 flex-1"
                   placeholder="Свой класс, например 9Д"
-                  required
                 />
                 <input
-                  name="grade"
+                  value={classGrade}
+                  onChange={(e) => setClassGrade(e.target.value)}
                   type="number"
                   min={1}
                   max={11}
                   className="input w-28"
                   placeholder="Параллель"
-                  required
                 />
-                <button type="submit" className="btn-ghost shrink-0">
-                  Добавить
+                <button
+                  type="button"
+                  className="btn-ghost shrink-0"
+                  disabled={busy || !className.trim() || !classGrade}
+                  onClick={() =>
+                    run("class:custom", async () => {
+                      const result = await addClass({
+                        name: className,
+                        grade: Number(classGrade),
+                      });
+                      if (!result.error) {
+                        setClassName("");
+                        setClassGrade("");
+                      }
+                      return result;
+                    })
+                  }
+                >
+                  {pending === "class:custom" ? "Добавляю…" : "Добавить"}
                 </button>
-              </form>
+              </div>
+
+              <Problem text={problem} />
             </div>
 
             <ItemList
               items={classes}
               emptyText="Пока не добавлен ни один класс"
-              onRemove={removeClass}
+              busy={busy}
+              pending={pending}
+              onRemove={(item) =>
+                run(`remove:${item.id}`, () => removeClass(item.id))
+              }
             />
           </div>
         )}
@@ -246,7 +336,7 @@ export function SetupWizard({
                 {[
                   "Раздайте код учителям — они регистрируются сами и выбирают, какие предметы и классы ведут.",
                   "Ученики регистрируются по тому же коду и выбирают свой класс из списка.",
-                  "Родители регистрируются после ребёнка и указывают его почту, чтобы связать аккаунты.",
+                  "Родители регистрируются по коду и указывают почту ребёнка — ученик подтверждает запрос у себя.",
                 ].map((text, i) => (
                   <li key={i} className="flex gap-3">
                     <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[var(--color-brand-tint)] text-xs font-semibold text-[var(--color-brand)]">
@@ -276,9 +366,7 @@ export function SetupWizard({
             type="button"
             className="btn-primary"
             onClick={() => go(step + 1)}
-            disabled={
-              busy || (step === 0 ? !canLeaveStep0 : !canLeaveStep1)
-            }
+            disabled={busy || (step === 0 ? !canLeaveStep0 : !canLeaveStep1)}
           >
             Далее
           </button>
@@ -311,11 +399,15 @@ export function SetupWizard({
 function ItemList({
   items,
   emptyText,
+  busy,
+  pending,
   onRemove,
 }: {
   items: Item[];
   emptyText: string;
-  onRemove: (formData: FormData) => void;
+  busy: boolean;
+  pending: string | null;
+  onRemove: (item: Item) => void;
 }) {
   if (items.length === 0) {
     return (
@@ -328,17 +420,19 @@ function ItemList({
   return (
     <div className="flex flex-wrap gap-2">
       {items.map((item) => (
-        <form key={item.id} action={onRemove} className="animate-pop">
-          <input type="hidden" name="id" value={item.id} />
-          <button
-            type="submit"
-            title="Убрать"
-            className="chip gap-1.5 bg-[var(--color-brand-tint)] text-[var(--color-brand)] transition-colors hover:bg-[var(--color-danger-tint)] hover:text-[var(--color-danger)]"
-          >
-            {item.name}
-            <span aria-hidden="true">×</span>
-          </button>
-        </form>
+        <button
+          key={item.id}
+          type="button"
+          title="Убрать"
+          disabled={busy}
+          onClick={() => onRemove(item)}
+          className="chip animate-pop gap-1.5 bg-[var(--color-brand-tint)] px-3 py-1.5 text-[var(--color-brand)] transition-colors hover:bg-[var(--color-danger-tint)] hover:text-[var(--color-danger)] disabled:opacity-50"
+        >
+          {item.name}
+          <span aria-hidden="true">
+            {pending === `remove:${item.id}` ? "…" : "×"}
+          </span>
+        </button>
       ))}
     </div>
   );

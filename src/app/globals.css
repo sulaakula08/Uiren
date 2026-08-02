@@ -482,108 +482,191 @@ body {
 }
 
 /*
+ * Каркас приложения с боковым меню.
+ *
+ * Свёрнутое состояние — один data-атрибут на корне: он же меняет ширину
+ * колонки и прячет всё, что не влезает в узкую полосу. Компонентам не нужно
+ * знать про состояние, поэтому меню остаётся серверным.
+ */
+@layer components {
+  @media (min-width: 1024px) {
+    .app-shell {
+      display: grid;
+      grid-template-columns: 248px 1fr;
+      transition: grid-template-columns 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .app-shell[data-collapsed="true"] {
+      grid-template-columns: 76px 1fr;
+    }
+
+    /* Подписи, переключатели языка и темы в полосу не помещаются. */
+    .app-shell[data-collapsed="true"] .sidebar-wide {
+      display: none;
+    }
+
+    /* Иконки встают по центру полосы, а не жмутся к левому краю. */
+    .app-shell[data-collapsed="true"] .sidebar-item {
+      justify-content: center;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    /* Ряды из нескольких кнопок разворачиваются в столбик. */
+    .app-shell[data-collapsed="true"] .sidebar-row {
+      flex-direction: column;
+    }
+  }
+}
+
+/*
  * Мобильная нижняя панель.
  *
  * Держится над контентом, учитывает «шторку» под экраном (safe-area) на
  * телефонах без физической кнопки. Подсветка активного пункта — отдельный
  * блок за иконкой, чтобы её можно было анимировать.
+ *
+ * Обязательно внутри @layer components: правила вне слоёв по каскаду сильнее
+ * любого слоя, поэтому незалеенная `.mobile-nav { display: flex }` побеждала
+ * утилиту `lg:hidden` — панель висела и на десктопе, перекрывая низ страницы.
  */
-.mobile-nav {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 30;
-  display: flex;
-  align-items: stretch;
-  justify-content: space-around;
-  gap: 0.25rem;
-  padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--color-line);
-  background: color-mix(in oklab, var(--color-surface) 88%, transparent);
-  backdrop-filter: blur(14px);
-}
+@layer components {
+  .mobile-nav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    gap: 0.25rem;
+    padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-line);
+    /*
+     * Панель закреплена поверх прокручиваемого контента, поэтому размытие
+     * пересчитывается на каждом кадре прокрутки — это самая дорогая операция
+     * в интерфейсе на телефоне. Подложка почти непрозрачная, стекло всё равно
+     * едва читалось, а радиус меньше вдвое — эффект остался, цена упала.
+     */
+    background: color-mix(in oklab, var(--color-surface) 94%, transparent);
+    backdrop-filter: blur(6px);
+  }
 
-.mobile-nav-item {
-  position: relative;
-  display: flex;
-  flex: 1 1 0;
-  min-width: 0;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  padding: 0.45rem 0.25rem 0.35rem;
-  color: var(--color-muted);
-  transition: color 0.22s ease;
-  -webkit-tap-highlight-color: transparent;
-}
+  .mobile-nav-item {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.45rem 0.25rem 0.35rem;
+    color: var(--color-muted);
+    transition: color 0.22s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-.mobile-nav-item[data-active="true"] {
-  color: var(--color-brand);
-}
+  .mobile-nav-item[data-active="true"] {
+    color: var(--color-brand);
+  }
 
-/* Подложка под иконкой: разрастается, когда раздел становится активным. */
-.mobile-nav-icon {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 3.25rem;
-  height: 1.9rem;
-  border-radius: 999px;
-  transition: transform 0.32s cubic-bezier(0.34, 1.45, 0.64, 1);
-}
+  /* Подложка под иконкой: разрастается, когда раздел становится активным. */
+  .mobile-nav-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 1.9rem;
+    border-radius: 999px;
+    transition: transform 0.32s cubic-bezier(0.34, 1.45, 0.64, 1);
+  }
 
-.mobile-nav-icon::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: var(--color-brand-tint);
-  transform: scale(0.6);
-  opacity: 0;
-  transition:
-    transform 0.32s cubic-bezier(0.34, 1.45, 0.64, 1),
-    opacity 0.22s ease;
-}
+  .mobile-nav-icon::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: var(--color-brand-tint);
+    transform: scale(0.6);
+    opacity: 0;
+    transition:
+      transform 0.32s cubic-bezier(0.34, 1.45, 0.64, 1),
+      opacity 0.22s ease;
+  }
 
-.mobile-nav-item[data-active="true"] .mobile-nav-icon::before {
-  transform: scale(1);
-  opacity: 1;
-}
+  .mobile-nav-item[data-active="true"] .mobile-nav-icon::before {
+    transform: scale(1);
+    opacity: 1;
+  }
 
-.mobile-nav-item:active .mobile-nav-icon {
-  transform: scale(0.9);
-}
+  .mobile-nav-item:active .mobile-nav-icon {
+    transform: scale(0.9);
+  }
 
-.mobile-nav-icon > * {
-  position: relative;
-}
+  .mobile-nav-icon > * {
+    position: relative;
+  }
 
-.mobile-nav-label {
-  max-width: 100%;
-  overflow: hidden;
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1.1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  .mobile-nav-label {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-/* Контент не должен прятаться под панелью. */
-.has-mobile-nav {
-  padding-bottom: calc(4.9rem + env(safe-area-inset-bottom));
-}
-
-@media (min-width: 1024px) {
+  /* Контент не должен прятаться под панелью. */
   .has-mobile-nav {
-    padding-bottom: 0;
+    padding-bottom: calc(4.9rem + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 1024px) {
+    .has-mobile-nav {
+      padding-bottom: 0;
+    }
   }
 }
 
-/* Свайп-назад двигает этот блок; will-change убирает дрожание на телефоне. */
+/*
+ * Страховка на случай, если панель когда-нибудь снова окажется вне слоя:
+ * на широком экране её место занимает боковое меню, и она не нужна никогда.
+ */
+@media (min-width: 1024px) {
+  .mobile-nav {
+    display: none;
+  }
+}
+
+/*
+ * Свайп-назад двигает этот блок.
+ *
+ * will-change здесь намеренно нет: постоянный отдельный слой под всю страницу
+ * съедает память и замедляет прокрутку на слабом телефоне. Компонент включает
+ * его сам на время жеста — там он и нужен.
+ */
 .swipe-area {
-  will-change: transform;
   touch-action: pan-y;
+}
+
+/*
+ * Декоративные бесконечные анимации на телефоне.
+ *
+ * Размытое пятно, которое едет по кругу 18 секунд, заставляет композитор
+ * пересобирать размытие каждый кадр — это заметно по отзывчивости и по
+ * батарее. На большом экране запас есть, на телефоне нет.
+ *
+ * Правило вне слоёв намеренно: утилиты `animate-*` живут в @layer utilities,
+ * и перебить их можно только незалеенным правилом.
+ */
+@media (max-width: 1023px) {
+  .animate-drift,
+  .animate-float,
+  .logo-spark {
+    animation: none;
+  }
 }
 
 /*

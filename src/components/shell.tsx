@@ -4,6 +4,7 @@ import type { SessionPayload } from "@/lib/session";
 import type { Locale, MessageKey, Translator } from "@/lib/i18n";
 import { DEFAULT_THEME, THEME_COOKIE, isTheme } from "@/lib/theme";
 import { tourFor } from "@/lib/tour-steps";
+import { AppShell, SIDEBAR_COOKIE, SidebarToggle } from "./app-shell";
 import { LocaleSwitcher } from "./locale-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
 import { IconSettings } from "./icons";
@@ -38,44 +39,61 @@ export async function Shell({
   tourDone: boolean;
   children: React.ReactNode;
 }) {
-  const cookieTheme = (await cookies()).get(THEME_COOKIE)?.value;
+  const store = await cookies();
+  const cookieTheme = store.get(THEME_COOKIE)?.value;
   const theme = isTheme(cookieTheme) ? cookieTheme : DEFAULT_THEME;
+  const collapsed = store.get(SIDEBAR_COOKIE)?.value === "1";
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[248px_1fr]">
+    <AppShell defaultCollapsed={collapsed}>
       {/* На телефоне разделы уехали вниз, поэтому боковая панель скрыта. */}
       <aside className="hidden flex-col gap-6 border-[var(--color-line)] bg-[var(--color-surface)] p-4 lg:sticky lg:top-0 lg:flex lg:h-screen lg:border-r">
-        <Link href="/" className="logo-lockup flex items-center gap-2.5 px-1">
-          <Logo className="size-9" title={t("app.name")} />
-          <span className="text-[15px] font-semibold tracking-tight">
-            {t("app.name")}
-          </span>
-        </Link>
+        <div className="sidebar-row flex items-center gap-2">
+          <Link
+            href="/"
+            title={t("app.name")}
+            className="logo-lockup sidebar-item flex min-w-0 flex-1 items-center gap-2.5 px-1"
+          >
+            <Logo className="size-9 shrink-0" title={t("app.name")} />
+            <span className="sidebar-wide truncate text-[15px] font-semibold tracking-tight">
+              {t("app.name")}
+            </span>
+          </Link>
+          <SidebarToggle
+            collapseLabel={t("nav.collapse")}
+            expandLabel={t("nav.expand")}
+          />
+        </div>
 
         <NavLinks items={nav} />
 
         <div className="mt-auto space-y-3">
           <Link
             href="/settings"
-            className="flex items-center gap-2.5 rounded-xl bg-[var(--color-canvas)] px-3 py-2.5 transition-colors hover:bg-[var(--color-brand-tint)]"
+            title={session.fullName}
+            className="sidebar-item flex items-center gap-2.5 rounded-xl bg-[var(--color-canvas)] px-3 py-2.5 transition-colors hover:bg-[var(--color-brand-tint)]"
           >
             <div className="grid size-8 shrink-0 place-items-center rounded-full bg-[var(--color-surface)] text-xs font-semibold text-[var(--color-ink-2)]">
               {initials(session.fullName)}
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="sidebar-wide min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{session.fullName}</p>
               <p className="text-xs text-[var(--color-muted)]">
                 {t(`role.${session.role}` as MessageKey)}
               </p>
             </div>
-            <IconSettings className="size-4 shrink-0 text-[var(--color-muted)]" />
+            <IconSettings className="sidebar-wide size-4 shrink-0 text-[var(--color-muted)]" />
           </Link>
 
-          <ThemeSwitcher current={theme} locale={locale} />
+          <div className="sidebar-wide">
+            <ThemeSwitcher current={theme} locale={locale} />
+          </div>
 
-          <div className="flex items-center gap-2">
+          <div className="sidebar-row flex items-center gap-2">
             <TourButton label={t("tour.replay")} />
-            <LocaleSwitcher current={locale} />
+            <div className="sidebar-wide">
+              <LocaleSwitcher current={locale} />
+            </div>
             <LogoutButton
               label={t("nav.logout")}
               className="btn-ghost flex-1 px-2.5 py-2 text-xs"
@@ -87,7 +105,9 @@ export async function Shell({
 
       <div className="has-mobile-nav min-w-0">
         {/* Верхняя строка телефона: кто вошёл, тема и вход в настройки. */}
-        <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[var(--color-line)] bg-[var(--color-surface)]/90 px-4 py-2.5 backdrop-blur-md lg:hidden">
+        {/* Подложка почти непрозрачная: размытие поверх прокрутки на телефоне
+            стоит кадров, а разницы на глаз при такой заливке уже нет. */}
+        <div className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[var(--color-line)] bg-[var(--color-surface)]/95 px-4 py-2.5 backdrop-blur-sm lg:hidden">
           <Link href="/" className="logo-lockup flex items-center gap-2">
             <Logo className="size-7" title={t("app.name")} />
             <span className="text-[15px] font-semibold tracking-tight">
@@ -115,6 +135,6 @@ export async function Shell({
       <MobileNav items={nav} />
 
       <Tour steps={tourFor(session.role)} autoStart={!tourDone} />
-    </div>
+    </AppShell>
   );
 }

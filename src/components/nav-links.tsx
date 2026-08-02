@@ -29,7 +29,8 @@ export function NavLinks({ items }: { items: NavItem[] }) {
             href={item.href}
             data-tour={item.tourId}
             aria-current={active ? "page" : undefined}
-            className={`flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+            title={item.label}
+            className={`sidebar-item flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
               active
                 ? "bg-[var(--color-brand-tint)] text-[var(--color-brand)]"
                 : "text-[var(--color-ink-2)] hover:bg-[var(--color-canvas)]"
@@ -42,7 +43,8 @@ export function NavLinks({ items }: { items: NavItem[] }) {
                   : "text-[var(--color-muted)]"
               }
             />
-            {item.label}
+            {/* В свёрнутой панели остаются только иконки — подпись прячет CSS. */}
+            <span className="sidebar-wide truncate">{item.label}</span>
           </Link>
         );
       })}

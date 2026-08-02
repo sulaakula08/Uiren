@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { PasswordInput } from "@/components/password-input";
 import {
   changePassword,
   updateProfile,
@@ -115,48 +116,29 @@ export function PasswordForm() {
   return (
     <form action={action} className="space-y-4">
       <div className="max-w-xs">
-        <label className="label" htmlFor="current">
-          Текущий пароль
-        </label>
-        <input
+        <PasswordInput
           id="current"
           name="current"
-          type="password"
+          label="Текущий пароль"
           autoComplete="current-password"
-          required
-          className="input"
         />
       </div>
 
       <div className="grid max-w-lg gap-4 sm:grid-cols-2">
-        <div>
-          <label className="label" htmlFor="next">
-            Новый пароль
-          </label>
-          <input
-            id="next"
-            name="next"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={6}
-            className="input"
-          />
-        </div>
-        <div>
-          <label className="label" htmlFor="repeat">
-            Повторите новый
-          </label>
-          <input
-            id="repeat"
-            name="repeat"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={6}
-            className="input"
-          />
-        </div>
+        <PasswordInput
+          id="next"
+          name="next"
+          label="Новый пароль"
+          autoComplete="new-password"
+          minLength={6}
+        />
+        <PasswordInput
+          id="repeat"
+          name="repeat"
+          label="Повторите новый"
+          autoComplete="new-password"
+          minLength={6}
+        />
       </div>
 
       <Notice state={state} />

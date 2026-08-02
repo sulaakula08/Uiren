@@ -170,6 +170,36 @@ export function IconPalette(props: IconProps) {
   );
 }
 
+/** Панель со свёрнутой колонкой — кнопка сворачивания бокового меню. */
+export function IconSidebar(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M9.5 4v16" />
+    </Svg>
+  );
+}
+
+export function IconEye(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </Svg>
+  );
+}
+
+export function IconEyeOff(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M10.7 6.7A8.9 8.9 0 0 1 12 6.6c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3 3.8" />
+      <path d="M6.4 7.9A16.7 16.7 0 0 0 2.5 13.1S6 19.6 12 19.6c1.7 0 3.2-.5 4.5-1.2" />
+      <path d="M10 11a2.8 2.8 0 0 0 4 4" />
+      <path d="m4 4 16 16" />
+    </Svg>
+  );
+}
+
 export const NAV_ICONS = {
   home: IconHome,
   tasks: IconTasks,

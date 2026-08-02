@@ -3,6 +3,9 @@ import { getT } from "@/lib/locale";
 import { isTourDone } from "@/lib/tour";
 import { Shell } from "@/components/shell";
 
+/** Прогноз ЕНТ — тот же долгий вызов модели, что и проверка работ у учителя. */
+export const maxDuration = 120;
+
 export default async function DirectorLayout({
   children,
 }: {

@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
+import { PasswordInput } from "@/components/password-input";
 import { joinSchool, lookupSchool, type RegisterState } from "../actions";
 
 type Found = {
@@ -192,21 +193,14 @@ export function JoinForm() {
               />
             </div>
 
-            <div>
-              <label className="label" htmlFor="password">
-                Пароль
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                minLength={6}
-                className="input"
-                autoComplete="new-password"
-                placeholder="минимум 6 символов"
-                required
-              />
-            </div>
+            <PasswordInput
+              id="password"
+              name="password"
+              label="Пароль"
+              minLength={6}
+              autoComplete="new-password"
+              placeholder="минимум 6 символов"
+            />
 
             <div>
               <label className="label" htmlFor="locale">

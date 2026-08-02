@@ -3,6 +3,13 @@ import { getT } from "@/lib/locale";
 import { isTourDone } from "@/lib/tour";
 import { Shell } from "@/components/shell";
 
+/**
+ * Проверка работ и генерация планов — это вызов модели с рассуждением, он
+ * идёт десятки секунд. Со стандартным лимитом функции запрос обрывался на
+ * середине, и учитель видел ошибку вместо разбора.
+ */
+export const maxDuration = 120;
+
 export default async function TeacherLayout({
   children,
 }: {

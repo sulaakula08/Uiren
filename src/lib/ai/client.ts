@@ -66,7 +66,11 @@ export async function runStructured<T>(call: StructuredCall<T>): Promise<T> {
     const client = anthropic();
     const response = await client.messages.create({
       model,
-      max_tokens: call.maxTokens ?? 8000,
+      // На Opus 5 и Sonnet 5 рассуждение включено по умолчанию, а max_tokens
+      // ограничивает рассуждение и ответ вместе. При тесном лимите модель
+      // успевала подумать, но не успевала вызвать инструмент — и разбор падал
+      // с «неожиданным форматом». Поэтому запас, а не впритык.
+      max_tokens: call.maxTokens ?? 16000,
       system: call.system,
       output_config: { effort: call.effort ?? "medium" },
       tools: [
@@ -85,6 +89,16 @@ export async function runStructured<T>(call: StructuredCall<T>): Promise<T> {
       throw new AiError(
         "Модель отклонила запрос по соображениям безопасности.",
         "REFUSAL",
+      );
+    }
+
+    // Обрыв по лимиту токенов даёт ответ без вызова инструмента. Без этой
+    // ветки он доходил до разбора ниже и превращался в невнятное «неожиданный
+    // формат» — учителю оставалось только гадать, что произошло.
+    if (response.stop_reason === "max_tokens") {
+      throw new AiError(
+        "Ответ не поместился в лимит. Попробуйте ещё раз — если повторяется, разбейте работу на части.",
+        "BAD_OUTPUT",
       );
     }
 

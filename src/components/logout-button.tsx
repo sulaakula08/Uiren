@@ -13,12 +13,7 @@ function Confirm({ cancel }: { cancel: string }) {
         type="button"
         className="btn-ghost flex-1"
         disabled={pending}
-        // Кнопка внутри формы диалога: закрываем через нативный method="dialog".
-        formMethod="dialog"
-        onClick={(e) => {
-          e.preventDefault();
-          e.currentTarget.closest("dialog")?.close();
-        }}
+        onClick={(e) => e.currentTarget.closest("dialog")?.close()}
       >
         {cancel}
       </button>
@@ -54,20 +49,28 @@ export function LogoutButton({
 
   return (
     <>
-      <button
-        type="button"
-        className={className}
-        title={title ?? label}
-        onClick={() => {
-          const dialog = ref.current;
-          // Без JS диалога нет — тогда просто отправляем форму выхода.
-          if (dialog) dialog.showModal();
-          else ref.current?.closest("form")?.requestSubmit();
-        }}
-      >
-        <IconLogout className="size-4" />
-        {!iconOnly && label}
-      </button>
+      {/*
+       * Кнопка — обычный submit внутри формы выхода. Пока диалога нет (сервер,
+       * выключенный JS), нажатие просто отправляет форму и выход происходит.
+       * Когда диалог смонтирован — перехватываем и спрашиваем подтверждение.
+       * display: contents, чтобы обёртка не влияла на раскладку панели.
+       */}
+      <form action={logout} className="contents">
+        <button
+          type="submit"
+          className={className}
+          title={title ?? label}
+          onClick={(e) => {
+            const dialog = ref.current;
+            if (!dialog) return;
+            e.preventDefault();
+            dialog.showModal();
+          }}
+        >
+          <IconLogout className="size-4" />
+          {!iconOnly && label}
+        </button>
+      </form>
 
       {/* Диалог рендерим только после монтирования: showModal есть лишь в браузере. */}
       {mounted && (

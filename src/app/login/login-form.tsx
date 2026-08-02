@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { PasswordInput } from "@/components/password-input";
 import { login, type LoginState } from "./actions";
 
 function Submit({ label }: { label: string }) {
@@ -36,19 +37,12 @@ export function LoginForm({
         />
       </div>
 
-      <div>
-        <label className="label" htmlFor="password">
-          {labels.password}
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          className="input"
-        />
-      </div>
+      <PasswordInput
+        id="password"
+        name="password"
+        label={labels.password}
+        autoComplete="current-password"
+      />
 
       {state.error && (
         <p className="animate-pop rounded-xl bg-[var(--color-danger-tint)] px-3.5 py-2.5 text-sm text-[var(--color-danger)]">

@@ -4,7 +4,9 @@ import { getT } from "@/lib/locale";
 import { db } from "@/lib/db";
 import { studentGaps } from "@/lib/analytics";
 import { Empty, PageHeader, SectionHeader, Stat } from "@/components/ui";
+import { FamilyLinkForm } from "@/components/family-link-form";
 import type { MessageKey } from "@/lib/i18n";
+import { linkParent, unlinkParent } from "./actions";
 
 export default async function StudentOverview() {
   const session = await requireRole("STUDENT");
@@ -16,7 +18,7 @@ export default async function StudentOverview() {
   });
   const classIds = enrollments.map((e) => e.classId);
 
-  const [assignments, submissions, gaps] = await Promise.all([
+  const [assignments, submissions, gaps, parents] = await Promise.all([
     db.assignment.findMany({
       where: { classId: { in: classIds } },
       orderBy: { createdAt: "desc" },
@@ -27,6 +29,11 @@ export default async function StudentOverview() {
       include: { assignment: true },
     }),
     studentGaps(session.userId),
+    db.parentLink.findMany({
+      where: { studentId: session.userId },
+      orderBy: { parent: { fullName: "asc" } },
+      include: { parent: { select: { fullName: true, email: true } } },
+    }),
   ]);
 
   const byAssignment = new Map(submissions.map((s) => [s.assignmentId, s]));
@@ -148,6 +155,49 @@ export default async function StudentOverview() {
             </Link>
           </div>
         )}
+      </section>
+
+      <section>
+        <SectionHeader
+          title="Родители"
+          subtitle="Кто видит вашу успеваемость и сообщения учителей"
+        />
+
+        {parents.length > 0 && (
+          <div className="card mb-4 space-y-2">
+            {parents.map((link) => (
+              <div
+                key={link.id}
+                className="flex flex-wrap items-center justify-between gap-3 border-b pb-2 last:border-b-0 last:pb-0"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    {link.parent.fullName}
+                  </p>
+                  <p className="muted text-xs">{link.parent.email}</p>
+                </div>
+                <form action={unlinkParent}>
+                  <input type="hidden" name="parentId" value={link.parentId} />
+                  <button
+                    type="submit"
+                    className="btn-danger px-3 py-1.5 text-xs"
+                  >
+                    Отвязать
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <FamilyLinkForm
+          action={linkParent}
+          name="parentEmail"
+          label="Почта аккаунта родителя"
+          placeholder="родитель@mail.kz"
+          hint="Родитель должен быть зарегистрирован в этой школе по коду приглашения."
+          submitLabel="Подключить"
+        />
       </section>
     </div>
   );

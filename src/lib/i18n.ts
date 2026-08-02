@@ -26,6 +26,8 @@ const ru = {
   "nav.people": "Пользователи",
   "nav.children": "Мои дети",
   "nav.logout": "Выйти",
+  "nav.collapse": "Свернуть меню",
+  "nav.expand": "Развернуть меню",
 
   "role.ADMIN": "Администратор",
   "role.DIRECTOR": "Директор",
@@ -165,6 +167,8 @@ const kk: Record<MessageKey, string> = {
   "nav.people": "Пайдаланушылар",
   "nav.children": "Менің балаларым",
   "nav.logout": "Шығу",
+  "nav.collapse": "Мәзірді жию",
+  "nav.expand": "Мәзірді жаю",
 
   "role.ADMIN": "Әкімші",
   "role.DIRECTOR": "Директор",

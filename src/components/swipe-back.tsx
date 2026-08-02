@@ -53,10 +53,32 @@ export function SwipeBack({ children }: { children: React.ReactNode }) {
       el.style.opacity = x ? String(1 - Math.min(x / window.innerWidth, 1) * 0.3) : "";
     };
 
+    /*
+     * touchmove подписан только на время жеста.
+     *
+     * Он обязан быть non-passive (внутри вызывается preventDefault), а такой
+     * обработчик на контенте заставляет браузер ждать JS перед каждым кадром
+     * прокрутки — весь интерфейс начинает «залипать» под пальцем. Подписка на
+     * время жеста убирает эту плату с обычной прокрутки.
+     *
+     * will-change тоже включается только на время жеста: постоянный отдельный
+     * слой под всю страницу дорого стоит по памяти на слабом телефоне.
+     */
+    const startTracking = () => {
+      el.addEventListener("touchmove", onMove, { passive: false });
+      el.style.willChange = "transform";
+    };
+
+    const stopTracking = () => {
+      el.removeEventListener("touchmove", onMove);
+      el.style.willChange = "";
+    };
+
     const reset = () => {
       active = false;
       decided = false;
       dx = 0;
+      stopTracking();
       setX(0, true);
       window.setTimeout(() => {
         if (!active) el.style.transition = "";
@@ -74,6 +96,7 @@ export function SwipeBack({ children }: { children: React.ReactNode }) {
       startT = e.timeStamp;
       active = true;
       decided = false;
+      startTracking();
     };
 
     const onMove = (e: TouchEvent) => {
@@ -86,7 +109,9 @@ export function SwipeBack({ children }: { children: React.ReactNode }) {
       if (!decided) {
         if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return;
         if (Math.abs(deltaY) > Math.abs(deltaX)) {
+          // Это обычная прокрутка — отпускаем её сразу, не мешая браузеру.
           active = false;
+          stopTracking();
           return;
         }
         decided = true;
@@ -107,6 +132,7 @@ export function SwipeBack({ children }: { children: React.ReactNode }) {
     const onEnd = (e: TouchEvent) => {
       if (!active || !decided) {
         active = false;
+        stopTracking();
         return;
       }
       const elapsed = Math.max(1, e.timeStamp - startT);
@@ -126,13 +152,13 @@ export function SwipeBack({ children }: { children: React.ReactNode }) {
         }, 200);
         active = false;
         decided = false;
+        stopTracking();
       } else {
         reset();
       }
     };
 
     el.addEventListener("touchstart", onStart, { passive: true });
-    el.addEventListener("touchmove", onMove, { passive: false });
     el.addEventListener("touchend", onEnd, { passive: true });
     el.addEventListener("touchcancel", reset, { passive: true });
 

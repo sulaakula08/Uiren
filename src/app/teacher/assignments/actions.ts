@@ -13,6 +13,7 @@ import {
   type ClassInsight,
   type GeneratedTasks,
 } from "@/lib/ai/tasks";
+import { buildStudentHistory, formatHistory } from "@/lib/ai/history";
 import { getLocale } from "@/lib/locale";
 
 export type TaskDraft = { prompt: string; expected: string; points: number };
@@ -140,6 +141,14 @@ export async function reviewSubmission(submissionId: string) {
   }[];
   const answers = JSON.parse(submission.answersJson) as Record<string, string>;
 
+  // Проверяем не листок, а человека: что у него уже проседало по этому
+  // предмету. Без этого повторяющийся пробел неотличим от описки.
+  const history = await buildStudentHistory(
+    submission.studentId,
+    submission.assignment.subjectId,
+    submission.id,
+  );
+
   const result = await gradeSubmission({
     userId: session.userId,
     locale,
@@ -149,6 +158,7 @@ export async function reviewSubmission(submissionId: string) {
     maxScore: submission.assignment.maxScore,
     tasks,
     answers,
+    history: formatHistory(history),
   });
 
   await db.$transaction([

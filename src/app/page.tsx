@@ -86,6 +86,30 @@ const STEPS = [
   },
 ];
 
+/** Прямые утверждения о продукте: подлежащее «Uiren», сказуемое — глагол. */
+const DOES = [
+  {
+    Icon: IconTasks,
+    title: "Uiren проверяет работы",
+    text: "Весь класс за одно нажатие. Каждому ученику — балл и объяснение, где именно сломалось решение, а не молчаливая тройка.",
+  },
+  {
+    Icon: IconChart,
+    title: "Uiren показывает пробелы",
+    text: "Не «класс написал слабо», а «13 человек не умеют выносить общий множитель». С этим уже понятно, что делать на завтрашнем уроке.",
+  },
+  {
+    Icon: IconPlan,
+    title: "Uiren готовит документы",
+    text: "КСП по ГОСО, отчёты по классу и школе, черновики сообщений родителям. Всё то, что съедает вечера и не имеет отношения к преподаванию.",
+  },
+  {
+    Icon: IconChat,
+    title: "Uiren отвечает ученику",
+    text: "Тьютор знает его класс, его тему и его последние ошибки. Подсказывает и ведёт к ответу, но не решает задачу за него.",
+  },
+];
+
 const BEFORE = [
   "Воскресенье уходит на тетради",
   "Класс написал СОР плохо, а почему — неясно",
@@ -248,6 +272,38 @@ export default async function LandingPage() {
                 >
                   {subject}
                 </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Что делает Uiren — прямым текстом, глаголами */}
+        <section className="border-b border-[var(--color-line)] bg-[var(--color-surface)]">
+          <div className="mx-auto max-w-6xl px-6 py-20">
+            <Reveal className="max-w-2xl">
+              <p className="eyebrow">Что делает Uiren</p>
+              <h2 className="display-sm mt-5 text-balance">
+                Четыре вещи, которые сегодня учитель делает руками
+              </h2>
+            </Reveal>
+
+            <div className="mt-12 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+              {DOES.map((item, i) => (
+                <Reveal key={item.title} delay={i * 80}>
+                  <div className="flex gap-4">
+                    <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--color-brand-tint)] text-[var(--color-brand)]">
+                      <item.Icon className="size-[18px]" />
+                    </span>
+                    <div>
+                      <h3 className="font-semibold tracking-tight">
+                        {item.title}
+                      </h3>
+                      <p className="muted mt-1.5 leading-relaxed">
+                        {item.text}
+                      </p>
+                    </div>
+                  </div>
+                </Reveal>
               ))}
             </div>
           </div>

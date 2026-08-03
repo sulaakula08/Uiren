@@ -1,10 +1,16 @@
 import { IconSpark } from "@/components/icons";
 
-/** Строки разбора класса — пример на лендинге, не настоящие данные школы. */
+/**
+ * Строки разбора класса — пример на лендинге, не настоящие данные школы.
+ *
+ * Темы выбраны узнаваемые: директор или родитель должны понять строку с ходу,
+ * без объяснений. «Перенос слагаемых» знает учитель математики, «проценты» и
+ * «квадратные уравнения» — все.
+ */
 const TOPICS = [
-  { name: "Линейные уравнения", percent: 86, tone: "bg-[var(--color-brand)]" },
-  { name: "Раскрытие скобок", percent: 61, tone: "bg-amber-500" },
-  { name: "Перенос слагаемых", percent: 34, tone: "bg-[var(--color-danger)]" },
+  { name: "Квадратные уравнения", percent: 86, tone: "bg-[var(--color-brand)]" },
+  { name: "Формулы сокращённого умножения", percent: 61, tone: "bg-amber-500" },
+  { name: "Проценты и доли", percent: 34, tone: "bg-[var(--color-danger)]" },
 ];
 
 /**
@@ -20,7 +26,7 @@ export function LandingPreview() {
         <span className="size-2.5 rounded-full bg-[var(--color-line)]" />
         <span className="size-2.5 rounded-full bg-[var(--color-line)]" />
         <p className="ml-2 text-xs font-medium text-[var(--color-muted)]">
-          Пример разбора · 7«Б» · Алгебра
+          Пример разбора · 8«Б» · Алгебра
         </p>
       </div>
 
@@ -40,16 +46,21 @@ export function LandingPreview() {
 
         <div className="space-y-3">
           {TOPICS.map((topic, i) => (
-            <div key={topic.name}>
+            /* Строка реагирует на курсор: подсвечивается и полоса становится
+               толще. Так видно, что это живой интерфейс, а не картинка. */
+            <div
+              key={topic.name}
+              className="group -mx-2 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-[var(--color-canvas)]"
+            >
               <div className="mb-1.5 flex items-baseline justify-between gap-3">
-                <span className="text-sm text-[var(--color-ink-2)]">
+                <span className="text-sm text-[var(--color-ink-2)] transition-colors duration-200 group-hover:text-[var(--color-ink)]">
                   {topic.name}
                 </span>
-                <span className="text-xs font-medium text-[var(--color-muted)] tabular-nums">
+                <span className="text-xs font-medium text-[var(--color-muted)] tabular-nums transition-all duration-200 group-hover:text-[15px] group-hover:font-semibold group-hover:text-[var(--color-ink)]">
                   {topic.percent}%
                 </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-line-2)]">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-line-2)] transition-all duration-200 group-hover:h-3">
                 <div
                   className={`animate-grow h-full rounded-full ${topic.tone}`}
                   style={{
@@ -65,8 +76,8 @@ export function LandingPreview() {
         <div className="rounded-xl border border-[var(--color-brand)]/20 bg-[var(--color-brand-tint)]/60 p-3.5">
           <p className="text-xs leading-relaxed text-[var(--color-brand-dark)]">
             <span className="font-semibold">Вывод для урока: </span>
-            13 учеников теряют знак при переносе слагаемого. Разберите этот шаг
-            на доске до новой темы.
+            13 учеников не умеют выносить общий множитель. Разберите этот шаг на
+            доске до контрольной.
           </p>
         </div>
       </div>

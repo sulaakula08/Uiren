@@ -237,14 +237,17 @@ body {
 
 /* Искра в логотипе: медленно разгорается и доворачивается. */
 @keyframes uiren-twinkle {
-  0%,
-  100% {
+  0% {
     opacity: 0.85;
     transform: scale(1) rotate(0deg);
   }
   50% {
     opacity: 1;
-    transform: scale(1.16) rotate(45deg);
+    transform: scale(1.14) rotate(180deg);
+  }
+  100% {
+    opacity: 0.85;
+    transform: scale(1) rotate(360deg);
   }
 }
 
@@ -754,7 +757,7 @@ body {
   .logo-spark {
     transform-box: fill-box;
     transform-origin: center;
-    animation: uiren-twinkle 4.5s ease-in-out infinite;
+    animation: uiren-twinkle 6s linear infinite;
   }
 
   .logo-draw {

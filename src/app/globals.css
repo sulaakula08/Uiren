@@ -531,6 +531,49 @@ body {
 }
 
 /*
+ * Иллюстрация причин ошибок на лендинге.
+ *
+ * Сегменты растягиваются, строки подъезжают снизу. Привязано к прокрутке там,
+ * где браузер это умеет: иначе анимация проигрывается вхолостую, пока блок
+ * ещё далеко внизу страницы.
+ */
+@keyframes uiren-seg {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.nature-seg {
+  transform-origin: left;
+  animation: uiren-seg 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.nature-row {
+  animation: uiren-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@supports (animation-timeline: view()) {
+  .nature-seg,
+  .nature-row {
+    animation-delay: 0ms;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nature-seg,
+  .nature-row {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/*
  * Заглушка содержимого на время загрузки.
  *
  * Не мигание прозрачностью, а блик, бегущий слева направо: он читается как

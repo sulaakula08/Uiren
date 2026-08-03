@@ -244,7 +244,6 @@ export async function approveSubmission(submissionId: string, score: number) {
 export async function gradeManually(
   submissionId: string,
   scores: Record<string, number>,
-  comments: Record<string, string>,
   feedback: string,
 ) {
   const session = await requireRole("TEACHER");
@@ -275,7 +274,8 @@ export async function gradeManually(
       nature: points === max ? ErrorNature.CORRECT : ErrorNature.INCOMPLETE,
       points,
       maxPoints: max,
-      comment: comments[task.id]?.trim() ?? "",
+      // Комментарий к каждому заданию убрали: учитель пишет один общий.
+      comment: "",
       concept: null,
     };
   });

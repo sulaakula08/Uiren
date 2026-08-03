@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
+import { Spinner } from "@/components/loading";
 import {
   completeGoogleSignup,
   lookupSchoolClasses,
@@ -14,7 +15,14 @@ function Submit() {
   const { pending } = useFormStatus();
   return (
     <button type="submit" className="btn-primary w-full" disabled={pending}>
-      {pending ? "Создаём аккаунт…" : "Завершить регистрацию"}
+      {pending ? (
+        <>
+          <Spinner className="size-4" />
+          Создаём аккаунт…
+        </>
+      ) : (
+        "Завершить регистрацию"
+      )}
     </button>
   );
 }

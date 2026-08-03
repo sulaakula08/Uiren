@@ -208,9 +208,6 @@ export default async function AssignmentPage({
                     initialScores={Object.fromEntries(
                       submission.findings.map((f) => [f.taskId, f.points]),
                     )}
-                    initialComments={Object.fromEntries(
-                      submission.findings.map((f) => [f.taskId, f.comment]),
-                    )}
                   />
 
                   {submission.findings.length > 0 && (

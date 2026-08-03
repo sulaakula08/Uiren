@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
+import { Spinner } from "@/components/loading";
 import { PasswordInput } from "@/components/password-input";
 import { joinSchool, lookupSchool, type RegisterState } from "../actions";
 
@@ -25,7 +26,14 @@ function Submit({ disabled }: { disabled: boolean }) {
       className="btn-primary w-full py-3"
       disabled={pending || disabled}
     >
-      {pending ? "Создаю аккаунт…" : "Создать аккаунт"}
+      {pending ? (
+        <>
+          <Spinner className="size-4" />
+          Создаю аккаунт…
+        </>
+      ) : (
+        "Создать аккаунт"
+      )}
     </button>
   );
 }

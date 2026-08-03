@@ -3,14 +3,12 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { getT } from "@/lib/locale";
 import { db } from "@/lib/db";
-import { hoursSaved } from "@/lib/analytics";
 import { SectionHeader, Stat } from "@/components/ui";
 import {
   IconChart,
   IconChat,
   IconPeople,
   IconPlan,
-  IconSpark,
   IconTasks,
 } from "@/components/icons";
 
@@ -38,9 +36,8 @@ export default async function TeacherOverview() {
   // Раньше здесь был отдельный count по той же таблице, что и findMany ниже:
   // лишний последовательный поход в базу перед каждым открытием обзора. Список
   // классов отвечает на оба вопроса сразу.
-  const [hours, pending, classes, assignments, lessonCount] = await Promise.all(
+  const [pending, classes, assignments, lessonCount] = await Promise.all(
     [
-      hoursSaved(session.userId),
       db.submission.count({
         where: {
           status: "SUBMITTED",
@@ -64,6 +61,17 @@ export default async function TeacherOverview() {
       db.lesson.count({ where: { authorId: session.userId } }),
     ],
   );
+
+  const classIds = [...new Set(classes.map((c) => c.classId))];
+  const [studentCount, assignmentCount] = await Promise.all([
+    db.user.count({
+      where: {
+        role: "STUDENT",
+        enrollments: { some: { classId: { in: classIds } } },
+      },
+    }),
+    db.assignment.count({ where: { authorId: session.userId } }),
+  ]);
 
   // Без предметов и классов работать не с чем — ведём сразу в настройку.
   if (classes.length === 0) redirect("/teacher/setup");
@@ -137,33 +145,32 @@ export default async function TeacherOverview() {
         className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
         <Stat
-          label={t("teacher.hoursSaved")}
-          value={hours}
-          hint={t("teacher.hoursSavedHint")}
-          tone="brand"
-          Icon={IconSpark}
+          label="Ждут проверки"
+          value={pending}
+          hint={pending > 0 ? "работ сдано" : "всё проверено"}
+          tone={pending > 0 ? "warn" : "default"}
+          Icon={IconTasks}
           delay={0}
         />
         <Stat
-          label={t("teacher.pendingReview")}
-          value={pending}
-          hint={pending > 0 ? "проверяются одной кнопкой" : "всё проверено"}
-          tone={pending > 0 ? "warn" : "default"}
-          Icon={IconTasks}
+          label="Учеников"
+          value={studentCount}
+          hint={`в ${uniqueClasses} ${uniqueClasses === 1 ? "классе" : "классах"}`}
+          Icon={IconPeople}
           delay={70}
         />
         <Stat
-          label={t("teacher.activeClasses")}
-          value={uniqueClasses}
-          hint="закреплено за вами"
-          Icon={IconPeople}
+          label="Заданий"
+          value={assignmentCount}
+          hint="создано вами"
+          Icon={IconChart}
           delay={140}
         />
         <Stat
           label="Планов уроков"
           value={lessonCount}
-          hint="сохранено в платформе"
-          Icon={IconChart}
+          hint="готовы к уроку"
+          Icon={IconPlan}
           delay={210}
         />
       </div>

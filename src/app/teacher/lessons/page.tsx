@@ -5,9 +5,18 @@ import { db } from "@/lib/db";
 import { Empty, PageHeader, SectionHeader } from "@/components/ui";
 import { LessonPlanner } from "./planner";
 
+/** Ровно то, что кладёт в planJson генератор плана (см. lib/ai/tasks.ts). */
 type StoredPlan = {
   objectives?: string[];
-  stages?: { name: string; minutes: number }[];
+  successCriteria?: string[];
+  stages?: {
+    name: string;
+    minutes: number;
+    activity?: string;
+    assessment?: string;
+  }[];
+  differentiation?: string;
+  resources?: string[];
 };
 
 export default async function LessonsPage() {
@@ -87,6 +96,9 @@ export default async function LessonsPage() {
                     {lesson.date.toLocaleDateString("ru-RU")}
                     {minutes ? ` · ${minutes} мин` : ""}
                   </p>
+                  {/* Раньше карточка показывала только три первых цели, а
+                      остальной план оставался в базе и открыть его было негде.
+                      Теперь под кнопкой лежит всё, что сохранил генератор. */}
                   {plan.objectives && plan.objectives.length > 0 && (
                     <ul className="mt-3 space-y-1 text-sm">
                       {plan.objectives.slice(0, 3).map((o, i) => (
@@ -94,8 +106,96 @@ export default async function LessonsPage() {
                           • {o}
                         </li>
                       ))}
+                      {plan.objectives.length > 3 && (
+                        <li className="muted text-xs">
+                          и ещё {plan.objectives.length - 3}
+                        </li>
+                      )}
                     </ul>
                   )}
+
+                  <details className="group mt-4">
+                    <summary className="cursor-pointer list-none text-sm font-medium text-[var(--color-brand)] hover:underline">
+                      Открыть план полностью
+                      <span className="ml-1 inline-block transition-transform group-open:rotate-90">
+                        ›
+                      </span>
+                    </summary>
+
+                    <div className="mt-4 space-y-4 border-t border-[var(--color-line)] pt-4">
+                      {plan.objectives && plan.objectives.length > 0 && (
+                        <div>
+                          <p className="label">Цели обучения</p>
+                          <ul className="space-y-1 text-sm">
+                            {plan.objectives.map((o, i) => (
+                              <li key={i}>• {o}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {plan.successCriteria &&
+                        plan.successCriteria.length > 0 && (
+                          <div>
+                            <p className="label">Критерии успеха</p>
+                            <ul className="space-y-1 text-sm">
+                              {plan.successCriteria.map((c, i) => (
+                                <li key={i}>• {c}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                      {plan.stages && plan.stages.length > 0 && (
+                        <div>
+                          <p className="label">Ход урока</p>
+                          <ol className="space-y-2.5">
+                            {plan.stages.map((st, i) => (
+                              <li
+                                key={i}
+                                className="rounded-lg bg-[var(--color-canvas)] p-3"
+                              >
+                                <div className="flex items-baseline justify-between gap-3">
+                                  <span className="text-sm font-medium">
+                                    {st.name}
+                                  </span>
+                                  <span className="muted shrink-0 text-xs">
+                                    {st.minutes} мин
+                                  </span>
+                                </div>
+                                {st.activity && (
+                                  <p className="mt-1.5 text-sm">{st.activity}</p>
+                                )}
+                                {st.assessment && (
+                                  <p className="muted mt-1 text-xs">
+                                    Оценивание: {st.assessment}
+                                  </p>
+                                )}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+
+                      {plan.differentiation && (
+                        <div>
+                          <p className="label">Дифференциация</p>
+                          <p className="text-sm">{plan.differentiation}</p>
+                        </div>
+                      )}
+
+                      {plan.resources && plan.resources.length > 0 && (
+                        <div>
+                          <p className="label">Ресурсы</p>
+                          <ul className="space-y-1 text-sm">
+                            {plan.resources.map((r, i) => (
+                              <li key={i}>• {r}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </details>
                 </div>
               );
             })}

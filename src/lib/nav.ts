@@ -17,6 +17,7 @@ export function navFor(role: Role, t: Translator): NavItem[] {
           label: t("nav.assignments"),
           icon: "tasks",
         },
+        { href: "/teacher/students", label: "Ученики", icon: "people" },
         { href: "/teacher/lessons", label: t("nav.lessons"), icon: "plan" },
         { href: "/teacher/messages", label: t("nav.messages"), icon: "mail" },
         { href: "/chat", label: "Переписка", icon: "chat" },
@@ -24,6 +25,7 @@ export function navFor(role: Role, t: Translator): NavItem[] {
     case "STUDENT":
       return [
         { href: "/student", label: t("nav.overview"), icon: "home" },
+        { href: "/student/grades", label: "Оценки", icon: "chart" },
         { href: "/student/tutor", label: t("nav.tutor"), icon: "chat" },
         { href: "/chat", label: "Переписка", icon: "mail" },
       ];

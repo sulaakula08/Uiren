@@ -16,18 +16,14 @@ export function ManualReview({
   tasks,
   answers,
   initialScores,
-  initialComments,
 }: {
   submissionId: string;
   tasks: Task[];
   answers: Record<string, string>;
   initialScores: Record<string, number>;
-  initialComments: Record<string, string>;
 }) {
   const [open, setOpen] = useState(false);
   const [scores, setScores] = useState<Record<string, number>>(initialScores);
-  const [comments, setComments] =
-    useState<Record<string, string>>(initialComments);
   const [feedback, setFeedback] = useState("");
   const [busy, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -93,15 +89,6 @@ export function ManualReview({
                 }
                 className="input w-16 px-2 py-1 text-xs"
               />
-              <input
-                aria-label={`Комментарий к заданию ${i + 1}`}
-                placeholder="Комментарий (необязательно)"
-                value={comments[task.id] ?? ""}
-                onChange={(e) =>
-                  setComments({ ...comments, [task.id]: e.target.value })
-                }
-                className="input flex-1 px-2.5 py-1 text-xs"
-              />
             </div>
           </div>
         ))}
@@ -109,7 +96,7 @@ export function ManualReview({
 
       <div className="mt-4">
         <label className="label" htmlFor={`fb-${submissionId}`}>
-          Комментарий ученику ко всей работе
+          Комментарий ученику
         </label>
         <textarea
           id={`fb-${submissionId}`}
@@ -133,7 +120,7 @@ export function ManualReview({
             start(async () => {
               setError(null);
               try {
-                await gradeManually(submissionId, scores, comments, feedback);
+                await gradeManually(submissionId, scores, feedback);
                 setOpen(false);
               } catch (e) {
                 setError(e instanceof Error ? e.message : "Не удалось сохранить");

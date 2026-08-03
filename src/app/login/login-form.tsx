@@ -3,13 +3,21 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { PasswordInput } from "@/components/password-input";
+import { Spinner } from "@/components/loading";
 import { login, type LoginState } from "./actions";
 
 function Submit({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" className="btn-primary w-full" disabled={pending}>
-      {pending ? "…" : label}
+      {pending ? (
+        <>
+          <Spinner className="size-4" />
+          Входим…
+        </>
+      ) : (
+        label
+      )}
     </button>
   );
 }

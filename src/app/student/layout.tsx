@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { getT } from "@/lib/locale";
 import { isTourDone } from "@/lib/tour";
+import { navFor } from "@/lib/nav";
 import { Shell } from "@/components/shell";
 
 export default async function StudentLayout({
@@ -20,15 +21,7 @@ export default async function StudentLayout({
       t={t}
       locale={locale}
       tourDone={tourDone}
-      nav={[
-        { href: "/student", label: t("nav.overview"), icon: "home" },
-        {
-          href: "/student/tutor",
-          label: t("nav.tutor"),
-          icon: "chat",
-          tourId: "nav-tutor",
-        },
-      ]}
+      nav={navFor(session.role, t)}
     >
       {children}
     </Shell>

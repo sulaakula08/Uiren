@@ -194,26 +194,28 @@ export function Tour({
 
       {rect && (
         <div
-          className="pointer-events-none fixed rounded-xl transition-all duration-300 ease-out"
+          className="tour-halo pointer-events-none fixed rounded-xl transition-all duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
           style={{
             top: rect.top - PAD,
             left: rect.left - PAD,
             width: rect.width + PAD * 2,
             height: rect.height + PAD * 2,
-            outline: "2px solid var(--color-brand)",
-            outlineOffset: 0,
           }}
         />
       )}
 
       <div
         key={index}
-        className="animate-pop pointer-events-auto fixed rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-[0_12px_40px_rgb(16_24_40_/_0.22)]"
+        className="tour-card pointer-events-auto fixed rounded-2xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5 shadow-[0_12px_40px_rgb(16_24_40_/_0.22)]"
         style={{ top: cardTop, left: cardLeft, width: CARD_W }}
       >
-        <div className="mb-2.5 flex items-center gap-1.5">
-          {steps.map((_, i) => (
-            <span
+        <div className="mb-2.5 flex items-center justify-between gap-3">
+          <span className="text-[11px] font-medium text-[var(--color-muted)] tabular-nums">
+            {index + 1} из {steps.length}
+          </span>
+          <div className="flex items-center gap-1.5">
+            {steps.map((_, i) => (
+              <span
               key={i}
               className={`h-1 rounded-full transition-all duration-300 ${
                 i === index
@@ -223,7 +225,8 @@ export function Tour({
                     : "w-1.5 bg-[var(--color-line)]"
               }`}
             />
-          ))}
+            ))}
+          </div>
         </div>
 
         <h3 className="text-[15px] font-semibold tracking-tight">

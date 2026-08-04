@@ -531,6 +531,53 @@ body {
 }
 
 /*
+ * Обучающий тур.
+ *
+ * Подсветка не просто обводит элемент, а дышит: без движения глаз не находит
+ * её на затемнённом экране. Карточка выезжает со стороны подсветки, чтобы
+ * связь между ними читалась без стрелки.
+ */
+@keyframes uiren-tour-halo {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px var(--color-brand),
+      0 0 0 6px color-mix(in oklab, var(--color-brand) 28%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px var(--color-brand),
+      0 0 0 12px color-mix(in oklab, var(--color-brand) 0%, transparent);
+  }
+}
+
+.tour-halo {
+  animation: uiren-tour-halo 2s ease-out infinite;
+}
+
+@keyframes uiren-tour-card {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tour-card {
+  animation: uiren-tour-card 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-halo,
+  .tour-card {
+    animation: none;
+  }
+}
+
+/*
  * Иллюстрация причин ошибок на лендинге.
  *
  * Сегменты растягиваются, строки подъезжают снизу. Привязано к прокрутке там,

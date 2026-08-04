@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { getT } from "@/lib/locale";
 import { isTourDone } from "@/lib/tour";
+import { navFor } from "@/lib/nav";
 import { Shell } from "@/components/shell";
 
 /**
@@ -27,27 +28,7 @@ export default async function TeacherLayout({
       t={t}
       locale={locale}
       tourDone={tourDone}
-      nav={[
-        { href: "/teacher", label: t("nav.overview"), icon: "home" },
-        {
-          href: "/teacher/assignments",
-          label: t("nav.assignments"),
-          icon: "tasks",
-          tourId: "nav-assignments",
-        },
-        {
-          href: "/teacher/lessons",
-          label: t("nav.lessons"),
-          icon: "plan",
-          tourId: "nav-lessons",
-        },
-        {
-          href: "/teacher/messages",
-          label: t("nav.messages"),
-          icon: "mail",
-          tourId: "nav-messages",
-        },
-      ]}
+      nav={navFor(session.role, t)}
     >
       {children}
     </Shell>

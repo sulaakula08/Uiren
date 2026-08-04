@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { getT } from "@/lib/locale";
 import { isTourDone } from "@/lib/tour";
+import { navFor } from "@/lib/nav";
 import { Shell } from "@/components/shell";
 
 export default async function AdminLayout({
@@ -20,15 +21,7 @@ export default async function AdminLayout({
       t={t}
       locale={locale}
       tourDone={tourDone}
-      nav={[
-        { href: "/admin", label: t("nav.school"), icon: "home" },
-        {
-          href: "/admin/setup",
-          label: "Настройка",
-          icon: "plan",
-          tourId: "setup",
-        },
-      ]}
+      nav={navFor(session.role, t)}
     >
       {children}
     </Shell>

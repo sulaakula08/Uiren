@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth";
 import { getT } from "@/lib/locale";
 import { isTourDone } from "@/lib/tour";
+import { navFor } from "@/lib/nav";
 import { Shell } from "@/components/shell";
 
 /** Прогноз ЕНТ — тот же долгий вызов модели, что и проверка работ у учителя. */
@@ -23,15 +24,7 @@ export default async function DirectorLayout({
       t={t}
       locale={locale}
       tourDone={tourDone}
-      nav={[
-        { href: "/director", label: t("nav.overview"), icon: "chart" },
-        {
-          href: "/director/teachers",
-          label: t("director.teachers"),
-          icon: "people",
-          tourId: "nav-teachers",
-        },
-      ]}
+      nav={navFor(session.role, t)}
     >
       {children}
     </Shell>

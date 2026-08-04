@@ -89,6 +89,8 @@ model User {
   sentChat     ChatMessage[] @relation("ChatSender")
   receivedChat ChatMessage[] @relation("ChatRecipient")
 
+  lateRequests LateRequest[]
+
   @@index([schoolId, role])
 }
 
@@ -216,6 +218,16 @@ model Lesson {
   @@index([classId, date])
 }
 
+/// Что происходит после срока сдачи.
+enum LatePolicy {
+  /// Срок необязательный: сдать можно и позже, работа просто помечается.
+  OPEN
+  /// Сдать нельзя, но можно попросить учителя открыть доступ.
+  REQUEST
+  /// Сдать нельзя совсем.
+  BLOCK
+}
+
 enum AssignmentKind {
   HOMEWORK
   QUIZ
@@ -236,6 +248,8 @@ model Assignment {
   tasksJson   String
   maxScore    Int            @default(10)
   dueAt       DateTime?
+  /// Как вести себя после dueAt. Без срока значения не имеет.
+  latePolicy  LatePolicy     @default(OPEN)
   aiGenerated Boolean        @default(false)
   createdAt   DateTime       @default(now())
 
@@ -244,9 +258,37 @@ model Assignment {
   class   ClassGroup @relation(fields: [classId], references: [id], onDelete: Cascade)
   topic   Topic?     @relation(fields: [topicId], references: [id])
 
-  submissions Submission[]
+  submissions  Submission[]
+  lateRequests LateRequest[]
 
   @@index([classId, createdAt])
+}
+
+enum LateRequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+/// Просьба ученика открыть сдачу после срока.
+///
+/// Отдельно от Submission: ученик может не начинать работу вовсе, а строка
+/// Submission появляется только когда он что-то сохранил. Просьба существует
+/// сама по себе и до ответа учителя ничего не открывает.
+model LateRequest {
+  id           String            @id @default(cuid())
+  assignmentId String
+  studentId    String
+  reason       String
+  status       LateRequestStatus @default(PENDING)
+  createdAt    DateTime          @default(now())
+  decidedAt    DateTime?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student    User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, studentId])
+  @@index([assignmentId, status])
 }
 
 /// Природа ошибки — ядро слоя 2. Не «неверно», а «почему неверно».

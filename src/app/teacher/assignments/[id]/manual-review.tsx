@@ -16,13 +16,17 @@ export function ManualReview({
   tasks,
   answers,
   initialScores,
+  open,
+  onClose,
 }: {
   submissionId: string;
   tasks: Task[];
   answers: Record<string, string>;
   initialScores: Record<string, number>;
+  /** Панелью управляет ReviewActions: кнопка стоит рядом с проверкой через AI. */
+  open: boolean;
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [scores, setScores] = useState<Record<string, number>>(initialScores);
   const [feedback, setFeedback] = useState("");
   const [busy, start] = useTransition();
@@ -31,17 +35,7 @@ export function ManualReview({
   const total = tasks.reduce((sum, t) => sum + (scores[t.id] ?? 0), 0);
   const max = tasks.reduce((sum, t) => sum + t.points, 0);
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="btn-ghost mt-3 px-2.5 py-1 text-xs"
-      >
-        Проверить вручную
-      </button>
-    );
-  }
+  if (!open) return null;
 
   return (
     <div className="mt-4 rounded-xl border border-[var(--color-line)] bg-[var(--color-canvas)] p-4">
@@ -49,7 +43,7 @@ export function ManualReview({
         <p className="text-sm font-medium">Ручная проверка</p>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={onClose}
           className="text-xs text-[var(--color-muted)] hover:underline"
         >
           Свернуть
@@ -114,14 +108,14 @@ export function ManualReview({
         </p>
         <button
           type="button"
-          className="btn-primary px-3 py-1.5 text-xs"
+          className="btn-primary"
           disabled={busy}
           onClick={() =>
             start(async () => {
               setError(null);
               try {
                 await gradeManually(submissionId, scores, feedback);
-                setOpen(false);
+                onClose();
               } catch (e) {
                 setError(e instanceof Error ? e.message : "Не удалось сохранить");
               }
@@ -130,7 +124,7 @@ export function ManualReview({
         >
           {busy ? (
             <>
-              <Spinner className="size-3.5" />
+              <Spinner className="size-4" />
               Сохраняю…
             </>
           ) : (

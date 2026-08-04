@@ -67,7 +67,7 @@ export function ReviewOneButton({
   return (
     <div>
       <button
-        className="btn-ghost px-2.5 py-1 text-xs"
+        className="btn-ghost"
         disabled={busy}
         onClick={() =>
           start(async () => {
@@ -82,7 +82,7 @@ export function ReviewOneButton({
       >
         {busy ? (
           <>
-            <Spinner className="size-3.5" />
+            <Spinner className="size-4" />
             Проверяю…
           </>
         ) : (
@@ -120,14 +120,14 @@ export function ApproveControl({
         max={max}
         value={score}
         onChange={(e) => setScore(Number(e.target.value))}
-        className="input w-16 px-2 py-1 text-xs"
+        className="input w-20"
       />
       <button
-        className="btn-primary px-2.5 py-1 text-xs"
+        className="btn-primary"
         disabled={busy}
         onClick={() => start(() => approveSubmission(submissionId, score))}
       >
-        {busy ? <Spinner className="size-3.5" /> : label}
+        {busy ? <Spinner className="size-4" /> : label}
       </button>
     </div>
   );

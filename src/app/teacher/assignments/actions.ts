@@ -76,6 +76,8 @@ const createSchema = z.object({
   title: z.string().min(1),
   description: z.string(),
   aiGenerated: z.boolean(),
+  dueAt: z.string().optional(),
+  latePolicy: z.enum(["OPEN", "REQUEST", "BLOCK"]).default("OPEN"),
   tasks: z
     .array(
       z.object({
@@ -109,6 +111,9 @@ export async function createAssignment(payload: unknown) {
       tasksJson: JSON.stringify(tasks),
       maxScore: tasks.reduce((sum, task) => sum + task.points, 0),
       aiGenerated: data.aiGenerated,
+      // Пустая строка из формы — это «срока нет», а не «1970 год».
+      dueAt: data.dueAt ? new Date(data.dueAt) : null,
+      latePolicy: data.latePolicy,
     },
   });
 
@@ -361,4 +366,27 @@ export async function buildClassInsight(
       error: error instanceof AiError ? error.message : "AI-запрос не удался.",
     };
   }
+}
+
+/** Учитель отвечает на просьбу сдать после срока. */
+export async function decideLateRequest(requestId: string, approve: boolean) {
+  const session = await requireRole("TEACHER");
+
+  const request = await db.lateRequest.findUnique({
+    where: { id: requestId },
+    select: { id: true, assignment: { select: { id: true, authorId: true } } },
+  });
+  if (!request || request.assignment.authorId !== session.userId) {
+    throw new Error("Запрос не найден");
+  }
+
+  await db.lateRequest.update({
+    where: { id: requestId },
+    data: {
+      status: approve ? "APPROVED" : "DECLINED",
+      decidedAt: new Date(),
+    },
+  });
+
+  revalidatePath(`/teacher/assignments/${request.assignment.id}`);
 }

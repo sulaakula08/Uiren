@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
+import { POLICY_HINT, POLICY_LABEL } from "@/lib/deadline";
 import { useFormStatus } from "react-dom";
 import {
   createAssignment,
@@ -58,6 +59,9 @@ export function AssignmentComposer({
     setTasks(state.draft.tasks);
   }, [state.draft]);
 
+  const [dueAt, setDueAt] = useState("");
+  const [latePolicy, setLatePolicy] = useState("OPEN");
+
   const total = tasks.reduce((sum, task) => sum + (task.points || 0), 0);
 
   function patchTask(index: number, patch: Partial<TaskDraft>) {
@@ -77,6 +81,8 @@ export function AssignmentComposer({
           title,
           description,
           aiGenerated: Boolean(state.draft),
+          dueAt: dueAt || undefined,
+          latePolicy,
           tasks: tasks.map((task) => ({
             prompt: task.prompt,
             expected: task.expected,
@@ -303,6 +309,49 @@ export function AssignmentComposer({
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Срок сдачи и что делать после него */}
+          <div className="mt-6 grid gap-4 border-t border-[var(--color-line)] pt-5 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="dueAt">
+                Срок сдачи
+              </label>
+              <input
+                id="dueAt"
+                type="datetime-local"
+                value={dueAt}
+                onChange={(e) => setDueAt(e.target.value)}
+                className="input"
+              />
+              <p className="mt-1.5 text-xs text-[var(--color-muted)]">
+                Можно не указывать — тогда работу примут в любой момент.
+              </p>
+            </div>
+
+            <div>
+              <label className="label" htmlFor="latePolicy">
+                Что после срока
+              </label>
+              <select
+                id="latePolicy"
+                value={latePolicy}
+                onChange={(e) => setLatePolicy(e.target.value)}
+                disabled={!dueAt}
+                className="input"
+              >
+                {(["OPEN", "REQUEST", "BLOCK"] as const).map((key) => (
+                  <option key={key} value={key}>
+                    {POLICY_LABEL[key]}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-xs text-[var(--color-muted)]">
+                {dueAt
+                  ? POLICY_HINT[latePolicy as keyof typeof POLICY_HINT]
+                  : "Сначала укажите срок."}
+              </p>
+            </div>
+          </div>
+
             <button
               type="button"
               className="btn-ghost"

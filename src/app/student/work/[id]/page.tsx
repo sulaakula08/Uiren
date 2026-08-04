@@ -5,6 +5,8 @@ import { getT } from "@/lib/locale";
 import { db } from "@/lib/db";
 import { NatureChip } from "@/components/ui";
 import { WorkForm } from "./work-form";
+import { LateNotice } from "./late-request";
+import { submissionAccess } from "@/lib/deadline";
 
 export default async function StudentWorkPage({
   params,
@@ -46,6 +48,23 @@ export default async function StudentWorkPage({
     : {};
 
   const locked = submission ? submission.status !== "DRAFT" : false;
+
+  // Срок сдачи: та же функция, что и в серверном действии, чтобы форма и
+  // проверка на отправке не могли разойтись.
+  const lateRequest = await db.lateRequest.findUnique({
+    where: {
+      assignmentId_studentId: {
+        assignmentId: assignment.id,
+        studentId: session.userId,
+      },
+    },
+    select: { status: true },
+  });
+  const access = submissionAccess({
+    dueAt: assignment.dueAt,
+    latePolicy: assignment.latePolicy,
+    requestStatus: lateRequest?.status ?? null,
+  });
   const score = submission?.teacherScore ?? submission?.aiScore;
 
   return (
@@ -128,16 +147,38 @@ export default async function StudentWorkPage({
       )}
 
       <section>
-        <WorkForm
-          assignmentId={assignment.id}
-          tasks={tasks}
-          initial={answers}
-          locked={locked}
-          labels={{
-            submit: t("student.submit"),
-            submitted: t("student.submitted"),
-          }}
-        />
+        {/* Сданную работу показываем как есть: срок её уже не касается. */}
+        {access.canSubmit || locked ? (
+          <>
+            {access.late && !locked && (
+              <p className="mb-3 rounded-xl bg-[var(--color-warn-tint)] px-3.5 py-2.5 text-sm text-[var(--color-warn)]">
+                Срок прошёл. Работу примут, но она будет помечена как сданная
+                позже срока.
+              </p>
+            )}
+            <WorkForm
+              assignmentId={assignment.id}
+              tasks={tasks}
+              initial={answers}
+              locked={locked}
+              labels={{
+                submit: t("student.submit"),
+                submitted: t("student.submitted"),
+              }}
+            />
+          </>
+        ) : (
+          <LateNotice
+            assignmentId={assignment.id}
+            reason={access.reason}
+            dueAt={assignment.dueAt!.toLocaleDateString("ru-RU", {
+              day: "numeric",
+              month: "long",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          />
+        )}
       </section>
     </div>
   );

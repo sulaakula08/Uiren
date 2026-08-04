@@ -14,7 +14,8 @@ import {
   ReviewAllButton,
   ReviewOneButton,
 } from "./review-controls";
-import { ManualReview } from "./manual-review";
+import { ReviewActions } from "./review-actions";
+import { LateRequests } from "./late-requests";
 
 export default async function AssignmentPage({
   params,
@@ -39,6 +40,29 @@ export default async function AssignmentPage({
   });
 
   if (!assignment || assignment.authorId !== session.userId) notFound();
+
+  const pendingRequests = await db.lateRequest.findMany({
+    where: { assignmentId: assignment.id, status: "PENDING" },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      reason: true,
+      createdAt: true,
+      student: { select: { fullName: true } },
+    },
+  });
+
+  const lateRequests = pendingRequests.map((r) => ({
+    id: r.id,
+    reason: r.reason,
+    studentName: r.student.fullName,
+    createdAt: r.createdAt.toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  }));
 
   const tasks = JSON.parse(assignment.tasksJson) as {
     id: string;
@@ -152,6 +176,8 @@ export default async function AssignmentPage({
         }
       />
 
+      <LateRequests requests={lateRequests} />
+
       <section>
         <h2 className="h2 mb-4">Работы учеников</h2>
         {assignment.submissions.length === 0 ? (
@@ -175,22 +201,24 @@ export default async function AssignmentPage({
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      {submission.status === "SUBMITTED" && (
-                        <ReviewOneButton
-                          submissionId={submission.id}
-                          label={t("teacher.reviewOne")}
-                        />
+                    <ReviewActions
+                      submissionId={submission.id}
+                      status={submission.status}
+                      aiScore={submission.aiScore}
+                      maxScore={assignment.maxScore}
+                      tasks={tasks}
+                      answers={
+                        JSON.parse(submission.answersJson) as Record<
+                          string,
+                          string
+                        >
+                      }
+                      initialScores={Object.fromEntries(
+                        submission.findings.map((f) => [f.taskId, f.points]),
                       )}
-                      {submission.status === "AI_REVIEWED" && (
-                        <ApproveControl
-                          submissionId={submission.id}
-                          suggested={submission.aiScore ?? 0}
-                          max={assignment.maxScore}
-                          label={t("teacher.approve")}
-                        />
-                      )}
-                    </div>
+                      reviewLabel={t("teacher.reviewOne")}
+                      approveLabel={t("teacher.approve")}
+                    />
                   </div>
 
                   {submission.aiSummary && (
@@ -198,17 +226,6 @@ export default async function AssignmentPage({
                       {submission.aiSummary}
                     </p>
                   )}
-
-                  <ManualReview
-                    submissionId={submission.id}
-                    tasks={tasks}
-                    answers={
-                      JSON.parse(submission.answersJson) as Record<string, string>
-                    }
-                    initialScores={Object.fromEntries(
-                      submission.findings.map((f) => [f.taskId, f.points]),
-                    )}
-                  />
 
                   {submission.findings.length > 0 && (
                     <ul className="mt-3 space-y-2">

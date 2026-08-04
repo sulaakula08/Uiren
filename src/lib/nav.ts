@@ -26,7 +26,7 @@ export function navFor(role: Role, t: Translator): NavItem[] {
         },
         {
           href: "/teacher/students",
-          label: "Ученики",
+          label: t("nav.students"),
           icon: "people",
           tourId: "nav-students",
         },
@@ -44,7 +44,7 @@ export function navFor(role: Role, t: Translator): NavItem[] {
         },
         {
           href: "/chat",
-          label: "Переписка",
+          label: t("nav.chat"),
           icon: "chat",
           tourId: "nav-chat",
         },
@@ -54,7 +54,7 @@ export function navFor(role: Role, t: Translator): NavItem[] {
         { href: "/student", label: t("nav.overview"), icon: "home" },
         {
           href: "/student/grades",
-          label: "Оценки",
+          label: t("nav.grades"),
           icon: "chart",
           tourId: "nav-grades",
         },
@@ -66,7 +66,7 @@ export function navFor(role: Role, t: Translator): NavItem[] {
         },
         {
           href: "/chat",
-          label: "Переписка",
+          label: t("nav.chat"),
           icon: "mail",
           tourId: "nav-chat",
         },
@@ -76,7 +76,7 @@ export function navFor(role: Role, t: Translator): NavItem[] {
         { href: "/parent", label: t("nav.children"), icon: "child" },
         {
           href: "/chat",
-          label: "Переписка",
+          label: t("nav.chat"),
           icon: "mail",
           tourId: "nav-chat",
         },

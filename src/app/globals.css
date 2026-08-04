@@ -578,6 +578,44 @@ body {
 }
 
 /*
+ * Заполнение полос в блоках лендинга.
+ *
+ * Раньше это была обычная анимация при загрузке: к моменту, когда человек
+ * долистывал до блока, она давно закончилась, и полосы выглядели нарисованными.
+ * Теперь заполнение привязано к прокрутке — блок наполняется ровно тогда,
+ * когда попадает в кадр. Там, где scroll-driven анимаций нет, остаётся прежнее
+ * поведение: один раз при загрузке.
+ */
+@keyframes uiren-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.bar-fill {
+  transform-origin: left;
+  animation: uiren-fill 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@supports (animation-timeline: view()) {
+  .bar-fill {
+    animation-delay: 0ms;
+    animation-timeline: view();
+    animation-range: entry 10% cover 38%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar-fill {
+    animation: none;
+    transform: none;
+  }
+}
+
+/*
  * Иллюстрация причин ошибок на лендинге.
  *
  * Сегменты растягиваются, строки подъезжают снизу. Привязано к прокрутке там,
@@ -595,7 +633,7 @@ body {
 
 .nature-seg {
   transform-origin: left;
-  animation: uiren-seg 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: uiren-seg 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .nature-row {
@@ -607,7 +645,7 @@ body {
   .nature-row {
     animation-delay: 0ms;
     animation-timeline: view();
-    animation-range: entry 0% cover 30%;
+    animation-range: entry 10% cover 38%;
   }
 }
 

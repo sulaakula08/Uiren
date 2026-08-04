@@ -62,7 +62,7 @@ export function LandingPreview() {
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-line-2)] transition-all duration-200 group-hover:h-3">
                 <div
-                  className={`animate-grow h-full rounded-full ${topic.tone}`}
+                  className={`bar-fill h-full rounded-full ${topic.tone}`}
                   style={{
                     width: `${topic.percent}%`,
                     animationDelay: `${350 + i * 160}ms`,

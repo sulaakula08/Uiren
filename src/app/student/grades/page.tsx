@@ -90,7 +90,7 @@ export default async function StudentGradesPage() {
                         ) : (
                           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-line-2)]">
                             <div
-                              className="animate-grow h-full rounded-full bg-[var(--color-brand)]"
+                              className="bar-fill h-full rounded-full bg-[var(--color-brand)]"
                               style={{ width: `${Math.round(b.average!)}%` }}
                             />
                           </div>

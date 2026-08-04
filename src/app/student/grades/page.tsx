@@ -1,7 +1,8 @@
 import { requireRole } from "@/lib/auth";
+import { getT } from "@/lib/locale";
 import { Empty, PageHeader } from "@/components/ui";
 import {
-  BUCKET_LABEL,
+  BUCKET_KEY,
   BUCKET_SHARE,
   neededForMark,
   studentSubjectStats,
@@ -19,17 +20,20 @@ function markTone(mark: number) {
 
 export default async function StudentGradesPage() {
   const session = await requireRole("STUDENT");
-  const subjects = await studentSubjectStats(session.userId);
+  const [{ t }, subjects] = await Promise.all([
+    getT(),
+    studentSubjectStats(session.userId),
+  ]);
 
   return (
     <div>
       <PageHeader
-        title="Оценки"
-        subtitle="Формативное 25%, СОР 25%, СОЧ 50% — как принято в казахстанской школе"
+        title={t("gr.title")}
+        subtitle={t("gr.subtitle")}
       />
 
       {subjects.length === 0 ? (
-        <Empty text="Проверенных работ пока нет. Оценки появятся, когда учитель проверит первую работу." />
+        <Empty text={t("gr.empty")} />
       ) : (
         <div className="space-y-5">
           {subjects.map((s) => {
@@ -42,9 +46,9 @@ export default async function StudentGradesPage() {
                   <div>
                     <h2 className="h2">{s.subject}</h2>
                     <p className="muted mt-1 text-xs">
-                      {s.total} {s.total === 1 ? "работа" : "работ"} проверено
+                      {s.total} · {t("gr.checked")}
                       {s.averageMark !== null
-                        ? ` · средний балл ${s.averageMark}`
+                        ? ` · ${t("gr.avgMark")} ${s.averageMark}`
                         : ""}
                     </p>
                   </div>
@@ -58,7 +62,7 @@ export default async function StudentGradesPage() {
                         {s.quarterMark}
                       </p>
                       <p className="muted text-xs">
-                        {s.quarterPercent}% за четверть
+                        {s.quarterPercent}% {t("gr.quarter")}
                       </p>
                     </div>
                   )}
@@ -84,9 +88,9 @@ export default async function StudentGradesPage() {
                             </span>
                           )}
                         </div>
-                        <p className="mt-1 text-xs">{BUCKET_LABEL[key]}</p>
+                        <p className="mt-1 text-xs">{t(BUCKET_KEY[key])}</p>
                         {!has ? (
-                          <p className="muted mt-1.5 text-xs">Ещё не было</p>
+                          <p className="muted mt-1.5 text-xs">{t("gr.notYet")}</p>
                         ) : (
                           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-line-2)]">
                             <div
@@ -102,8 +106,8 @@ export default async function StudentGradesPage() {
 
                 {s.missing.length > 0 && (
                   <p className="muted mt-4 text-xs">
-                    Оценка предварительная: ещё не было{" "}
-                    {s.missing.map((m) => BUCKET_LABEL[m]).join(", ").toLowerCase()}.
+                    {t("gr.preliminary")}{" "}
+                    {s.missing.map((m) => t(BUCKET_KEY[m])).join(", ").toLowerCase()}.
                   </p>
                 )}
 
@@ -112,14 +116,13 @@ export default async function StudentGradesPage() {
                   <div className="mt-4 rounded-xl border border-[var(--color-brand)]/20 bg-[var(--color-brand-tint)]/50 p-3.5">
                     {need.reachable ? (
                       <p className="text-sm text-[var(--color-brand-dark)]">
-                        Чтобы выйти на <strong>{target}</strong>, нужно написать
-                        СОЧ минимум на <strong>{need.percent}%</strong>.
+                        {t("gr.toReach")} <strong>{target}</strong>,{" "}
+                        {t("gr.needSoch")} <strong>{need.percent}%</strong>.
                       </p>
                     ) : (
                       <p className="text-sm text-[var(--color-ink-2)]">
-                        Оценку <strong>{target}</strong> в этой четверти уже не
-                        получить: даже 100% за СОЧ не хватит. Соберите баллы на
-                        формативном оценивании.
+                        {t("gr.mark")} <strong>{target}</strong>{" "}
+                        {t("gr.unreachable")}
                       </p>
                     )}
                   </div>

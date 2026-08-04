@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { POLICY_HINT, POLICY_LABEL } from "@/lib/deadline";
 import { useFormStatus } from "react-dom";
 import {
   createAssignment,
@@ -31,9 +30,14 @@ function GenerateButton() {
 export function AssignmentComposer({
   subjects,
   classes,
+  policyOptions,
+  policyFirst,
 }: {
   subjects: Option[];
   classes: Option[];
+  /** Подписи политик приходят переведёнными: локаль известна на сервере. */
+  policyOptions: { value: string; label: string; hint: string }[];
+  policyFirst: string;
 }) {
   const [state, action] = useActionState<DraftState, FormData>(
     draftAssignment,
@@ -338,16 +342,17 @@ export function AssignmentComposer({
                 disabled={!dueAt}
                 className="input"
               >
-                {(["OPEN", "REQUEST", "BLOCK"] as const).map((key) => (
-                  <option key={key} value={key}>
-                    {POLICY_LABEL[key]}
+                {policyOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
                   </option>
                 ))}
               </select>
               <p className="mt-1.5 text-xs text-[var(--color-muted)]">
                 {dueAt
-                  ? POLICY_HINT[latePolicy as keyof typeof POLICY_HINT]
-                  : "Сначала укажите срок."}
+                  ? (policyOptions.find((o) => o.value === latePolicy)?.hint ??
+                    "")
+                  : policyFirst}
               </p>
             </div>
           </div>

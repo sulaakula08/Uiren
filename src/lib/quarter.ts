@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { toFivePoint } from "@/lib/journal";
+import type { MessageKey } from "@/lib/i18n";
 
 /**
  * Четвертная оценка по правилам критериального оценивания РК.
@@ -20,10 +21,11 @@ export const WEIGHTS = { FO: 0.25, SOR: 0.25, SOCH: 0.5 } as const;
 
 export type Bucket = "FO" | "SOR" | "SOCH";
 
-export const BUCKET_LABEL: Record<Bucket, string> = {
-  FO: "Формативное (ДЗ и проверочные)",
-  SOR: "СОР — за раздел",
-  SOCH: "СОЧ — за четверть",
+/** Ключи словаря: язык у каждого свой, готовую строку здесь брать неоткуда. */
+export const BUCKET_KEY: Record<Bucket, MessageKey> = {
+  FO: "bucket.FO",
+  SOR: "bucket.SOR",
+  SOCH: "bucket.SOCH",
 };
 
 export const BUCKET_SHARE: Record<Bucket, string> = {

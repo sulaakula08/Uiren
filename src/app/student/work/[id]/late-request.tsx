@@ -3,20 +3,32 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Spinner } from "@/components/loading";
-import { ACCESS_TEXT } from "@/lib/deadline";
 import { requestLateAccess, type LateRequestState } from "./actions";
 
-function Submit() {
+/**
+ * Тексты приходят готовыми со страницы: перевод берётся из словаря на сервере,
+ * где известна локаль пользователя, а клиентский компонент только показывает.
+ */
+export type LateLabels = {
+  title: string;
+  text: string;
+  wasDue: string;
+  send: string;
+  sending: string;
+  placeholder: string;
+};
+
+function Submit({ labels }: { labels: LateLabels }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" className="btn-primary" disabled={pending}>
       {pending ? (
         <>
           <Spinner className="size-4" />
-          Отправляю…
+          {labels.sending}
         </>
       ) : (
-        "Отправить запрос"
+        labels.send
       )}
     </button>
   );
@@ -27,16 +39,17 @@ export function LateNotice({
   assignmentId,
   reason,
   dueAt,
+  labels,
 }: {
   assignmentId: string;
   reason: "BLOCKED" | "NEEDS_REQUEST" | "REQUEST_PENDING" | "REQUEST_DECLINED";
   dueAt: string;
+  labels: LateLabels;
 }) {
   const [state, action] = useActionState<LateRequestState, FormData>(
     requestLateAccess,
     {},
   );
-  const copy = ACCESS_TEXT[reason];
   const sent = Boolean(state.ok);
 
   return (
@@ -57,9 +70,11 @@ export function LateNotice({
           </svg>
         </span>
         <div className="min-w-0">
-          <p className="font-medium">{copy.title}</p>
-          <p className="muted mt-1">{copy.text}</p>
-          <p className="muted mt-1 text-xs">Срок был до {dueAt}</p>
+          <p className="font-medium">{labels.title}</p>
+          <p className="muted mt-1">{labels.text}</p>
+          <p className="muted mt-1 text-xs">
+            {labels.wasDue} {dueAt}
+          </p>
         </div>
       </div>
 
@@ -73,14 +88,14 @@ export function LateNotice({
             minLength={5}
             maxLength={500}
             className="input"
-            placeholder="Например: болел, справка есть у классного руководителя"
+            placeholder={labels.placeholder}
           />
           {state.error && (
             <p className="animate-pop text-sm text-[var(--color-danger)]">
               {state.error}
             </p>
           )}
-          <Submit />
+          <Submit labels={labels} />
         </form>
       )}
 

@@ -4,6 +4,7 @@ import { getT } from "@/lib/locale";
 import { db } from "@/lib/db";
 import { Empty, PageHeader, SectionHeader } from "@/components/ui";
 import { AssignmentComposer } from "./composer";
+import { POLICY_KEY, POLICY_HINT_KEY } from "@/lib/deadline";
 
 export default async function AssignmentsPage() {
   const session = await requireRole("TEACHER");
@@ -63,7 +64,13 @@ export default async function AssignmentsPage() {
             </Link>
           </div>
         ) : (
-          <AssignmentComposer subjects={subjects} classes={classes} />
+          <AssignmentComposer
+        policyOptions={(["OPEN", "REQUEST", "BLOCK"] as const).map((k) => ({
+          value: k,
+          label: t(POLICY_KEY[k]),
+          hint: t(POLICY_HINT_KEY[k]),
+        }))}
+        policyFirst={t("assign.setDueFirst")} subjects={subjects} classes={classes} />
         )}
       </section>
 

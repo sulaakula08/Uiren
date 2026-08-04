@@ -1,4 +1,5 @@
 import type { LatePolicy, LateRequestStatus } from "@prisma/client";
+import type { MessageKey } from "@/lib/i18n";
 
 /**
  * Можно ли ученику сдать работу.
@@ -10,7 +11,11 @@ import type { LatePolicy, LateRequestStatus } from "@prisma/client";
  */
 export type Access =
   | { canSubmit: true; late: boolean; reason: null }
-  | { canSubmit: false; late: true; reason: "BLOCKED" | "NEEDS_REQUEST" | "REQUEST_PENDING" | "REQUEST_DECLINED" };
+  | {
+      canSubmit: false;
+      late: true;
+      reason: "BLOCKED" | "NEEDS_REQUEST" | "REQUEST_PENDING" | "REQUEST_DECLINED";
+    };
 
 export function submissionAccess(input: {
   dueAt: Date | null;
@@ -47,36 +52,28 @@ export function submissionAccess(input: {
   return { canSubmit: false, late: true, reason: "NEEDS_REQUEST" };
 }
 
-export const ACCESS_TEXT: Record<
+/**
+ * Ключи словаря, а не готовые строки: этот модуль зовут и с сервера, и с
+ * клиента, а язык у каждого пользователя свой.
+ */
+export const ACCESS_KEYS: Record<
   Exclude<Access["reason"], null>,
-  { title: string; text: string }
+  { title: MessageKey; text: MessageKey }
 > = {
-  BLOCKED: {
-    title: "Срок сдачи прошёл",
-    text: "Учитель закрыл приём этой работы. Если считаете, что это ошибка, напишите ему в переписке.",
-  },
-  NEEDS_REQUEST: {
-    title: "Срок сдачи прошёл",
-    text: "Сдать ещё можно, но нужно разрешение учителя. Напишите, почему не успели, — он ответит.",
-  },
-  REQUEST_PENDING: {
-    title: "Запрос отправлен",
-    text: "Учитель его видит. Как только откроет доступ, здесь появится форма сдачи.",
-  },
-  REQUEST_DECLINED: {
-    title: "Учитель отказал",
-    text: "Работу принять не получится. Причину можно уточнить в переписке.",
-  },
+  BLOCKED: { title: "late.passed", text: "late.blocked" },
+  NEEDS_REQUEST: { title: "late.passed", text: "late.needsRequest" },
+  REQUEST_PENDING: { title: "late.pendingTitle", text: "late.pending" },
+  REQUEST_DECLINED: { title: "late.declinedTitle", text: "late.declined" },
 };
 
-export const POLICY_LABEL: Record<LatePolicy, string> = {
-  OPEN: "Можно сдать и после срока",
-  REQUEST: "После срока — только с разрешения",
-  BLOCK: "После срока сдать нельзя",
+export const POLICY_KEY: Record<LatePolicy, MessageKey> = {
+  OPEN: "policy.OPEN",
+  REQUEST: "policy.REQUEST",
+  BLOCK: "policy.BLOCK",
 };
 
-export const POLICY_HINT: Record<LatePolicy, string> = {
-  OPEN: "Работа будет помечена как сданная позже срока.",
-  REQUEST: "Ученик сможет попросить вас открыть доступ.",
-  BLOCK: "Форма сдачи закроется, попросить будет нельзя.",
+export const POLICY_HINT_KEY: Record<LatePolicy, MessageKey> = {
+  OPEN: "policyHint.OPEN",
+  REQUEST: "policyHint.REQUEST",
+  BLOCK: "policyHint.BLOCK",
 };

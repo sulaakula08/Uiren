@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { NatureChip } from "@/components/ui";
 import { WorkForm } from "./work-form";
 import { LateNotice } from "./late-request";
-import { submissionAccess } from "@/lib/deadline";
+import { submissionAccess, ACCESS_KEYS } from "@/lib/deadline";
 
 export default async function StudentWorkPage({
   params,
@@ -152,8 +152,7 @@ export default async function StudentWorkPage({
           <>
             {access.late && !locked && (
               <p className="mb-3 rounded-xl bg-[var(--color-warn-tint)] px-3.5 py-2.5 text-sm text-[var(--color-warn)]">
-                Срок прошёл. Работу примут, но она будет помечена как сданная
-                позже срока.
+                {t("late.markedLate")}
               </p>
             )}
             <WorkForm
@@ -171,6 +170,14 @@ export default async function StudentWorkPage({
           <LateNotice
             assignmentId={assignment.id}
             reason={access.reason}
+            labels={{
+              title: t(ACCESS_KEYS[access.reason].title),
+              text: t(ACCESS_KEYS[access.reason].text),
+              wasDue: t("late.wasDue"),
+              send: t("late.sendRequest"),
+              sending: t("late.sending"),
+              placeholder: t("late.reasonPlaceholder"),
+            }}
             dueAt={assignment.dueAt!.toLocaleDateString("ru-RU", {
               day: "numeric",
               month: "long",

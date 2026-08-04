@@ -10,7 +10,7 @@ import { acceptParent, linkParent, unlinkParent } from "./actions";
 
 export default async function StudentOverview() {
   const session = await requireRole("STUDENT");
-  const { t } = await getT();
+  const { t, locale } = await getT();
 
   const enrollments = await db.enrollment.findMany({
     where: { studentId: session.userId },
@@ -72,24 +72,24 @@ export default async function StudentOverview() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title={`Привет, ${session.fullName.split(" ")[0]}`}
-        subtitle="Ваши задания и результаты"
+        title={`${t("st.greeting")}, ${session.fullName.split(" ")[0]}`}
+        subtitle={t("st.subtitle")}
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Stat
-          label="Нужно сдать"
+          label={t("st.toSubmit")}
           value={todo.length}
           tone={todo.length > 0 ? "warn" : "default"}
         />
-        <Stat label="Средний результат" value={`${average}%`} tone="brand" />
-        <Stat label="Тем с пробелами" value={gaps.length} />
+        <Stat label={t("st.average")} value={`${average}%`} tone="brand" />
+        <Stat label={t("st.gapTopics")} value={gaps.length} />
       </div>
 
       <section data-tour="work">
         <SectionHeader title={t("student.myWork")} />
         {assignments.length === 0 ? (
-          <Empty text="Учитель ещё не выдал ни одного задания. Оно появится здесь автоматически." />
+          <Empty text={t("st.noWork")} />
         ) : (
           <div className="space-y-3">
             {assignments.map((a) => {
@@ -108,7 +108,7 @@ export default async function StudentOverview() {
                       {a.subject.name}
                       {a.topic ? ` · ${a.topic.title}` : ""}
                       {a.dueAt
-                        ? ` · до ${a.dueAt.toLocaleDateString("ru-RU")}`
+                        ? ` · ${t("st.due")} ${a.dueAt.toLocaleDateString(locale === "kk" ? "kk-KZ" : "ru-RU")}`
                         : ""}
                     </p>
                   </div>
@@ -126,7 +126,7 @@ export default async function StudentOverview() {
                       <span className="chip bg-amber-50 text-amber-800">
                         {submission
                           ? t(`sub.status.${submission.status}` as MessageKey)
-                          : "Не сдано"}
+                          : t("st.notSubmitted")}
                       </span>
                     )}
                   </div>
@@ -140,10 +140,10 @@ export default async function StudentOverview() {
       <section data-tour="gaps">
         <SectionHeader
           title={t("student.gaps")}
-          subtitle="Понятия, где вы ошибались чаще всего"
+          subtitle={t("st.gapsSubtitle")}
         />
         {gaps.length === 0 ? (
-          <Empty text="Пробелы появятся здесь после того, как учитель проверит вашу первую работу." />
+          <Empty text={t("st.noGaps")} />
         ) : (
           <div className="card">
             <ul className="space-y-2">
@@ -169,8 +169,8 @@ export default async function StudentOverview() {
 
       <section>
         <SectionHeader
-          title="Родители"
-          subtitle="Кто видит вашу успеваемость и сообщения учителей"
+          title={t("st.parents")}
+          subtitle={t("st.parentsSubtitle")}
         />
 
         {parentRequests.length > 0 && (
@@ -279,10 +279,10 @@ export default async function StudentOverview() {
         <FamilyLinkForm
           action={linkParent}
           name="parentEmail"
-          label="Почта аккаунта родителя"
+          label={t("st.parentEmail")}
           placeholder="родитель@mail.kz"
-          hint="Родитель должен быть зарегистрирован в этой школе и подтвердить запрос у себя."
-          submitLabel="Подключить"
+          hint={t("st.parentHint")}
+          submitLabel={t("st.connect")}
         />
       </section>
     </div>

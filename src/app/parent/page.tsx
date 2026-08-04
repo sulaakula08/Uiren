@@ -95,14 +95,14 @@ export default async function ParentPage() {
     <div className="space-y-8">
       <PageHeader
         title={t("parent.title")}
-        subtitle="Оценки, пробелы и сообщения от учителей"
+        subtitle={t("pa.subtitle")}
       />
 
       {incoming.length > 0 && (
         <section>
           <SectionHeader
-            title="Запросы на связь"
-            subtitle="Ученик указал вашу почту — подтвердите, если это ваш ребёнок"
+            title={t("pa.requests")}
+            subtitle={t("pa.requestsSubtitle")}
           />
           <div className="space-y-2">
             {incoming.map((link) => (
@@ -139,8 +139,8 @@ export default async function ParentPage() {
       {outgoing.length > 0 && (
         <section>
           <SectionHeader
-            title="Ожидают подтверждения"
-            subtitle="Пока ребёнок не подтвердит запрос, оценки не открываются"
+            title={t("pa.awaiting")}
+            subtitle={t("pa.awaitingSubtitle")}
           />
           <div className="space-y-2">
             {outgoing.map((link) => (
@@ -171,7 +171,7 @@ export default async function ParentPage() {
           <Empty
             text={
               outgoing.length > 0
-                ? "Запрос отправлен — успеваемость появится здесь, как только ребёнок его подтвердит."
+                ? t("pa.sentHint")
                 : t("parent.noChildren")
             }
           />
@@ -196,7 +196,7 @@ export default async function ParentPage() {
                     <div className="min-w-0">
                       <h2 className="h2">{student.fullName}</h2>
                       <p className="muted mt-0.5 text-sm">
-                        {classes || "класс не назначен"} · {student.email}
+                        {classes || t("pa.noClass")} · {student.email}
                       </p>
                     </div>
                     <form action={unlinkChild}>
@@ -216,28 +216,28 @@ export default async function ParentPage() {
 
                   <div className="grid gap-4 sm:grid-cols-3">
                     <Stat
-                      label="Средний результат"
+                      label={t("st.average")}
                       value={average === null ? "—" : `${average}%`}
                       hint={
                         average === null
-                          ? "работы ещё не проверены"
-                          : "по всем проверенным работам"
+                          ? t("pa.notChecked")
+                          : t("pa.allChecked")
                       }
                       tone="brand"
                     />
                     <Stat
-                      label="Сдано работ"
+                      label={t("pa.submitted")}
                       value={child.submittedCount}
                       hint={
                         child.awaiting > 0
-                          ? `${child.awaiting} ждёт проверки`
-                          : "все проверены"
+                          ? `${child.awaiting} ${t("pa.awaitingCheck")}`
+                          : t("pa.allDone")
                       }
                       tone={child.awaiting > 0 ? "warn" : "default"}
                       delay={70}
                     />
                     <Stat
-                      label="Тем с пробелами"
+                      label={t("st.gapTopics")}
                       value={gaps.length}
                       delay={140}
                     />
@@ -281,7 +281,7 @@ export default async function ParentPage() {
                     </div>
 
                     <div className="card">
-                      <p className="label mb-3">Над чем стоит поработать</p>
+                      <p className="label mb-3">{t("pa.workOn")}</p>
                       {gaps.length === 0 ? (
                         <p className="muted text-sm">
                           Системных пробелов не выявлено.
@@ -312,8 +312,8 @@ export default async function ParentPage() {
 
           <section>
             <SectionHeader
-              title="Ещё один ребёнок"
-              subtitle="Если в школе учится второй ребёнок, добавьте его сюда"
+              title={t("pa.oneMore")}
+              subtitle={t("pa.oneMoreSubtitle")}
             />
             <FamilyLinkForm
               action={linkChild}
@@ -327,7 +327,7 @@ export default async function ParentPage() {
       <section data-tour="messages">
         <SectionHeader title={t("parent.fromTeacher")} />
         {messages.length === 0 ? (
-          <Empty text="Сообщений пока нет. Учителя пишут сюда, когда есть что сказать." />
+          <Empty text={t("pa.noMessages")} />
         ) : (
           <div className="space-y-3">
             {messages.map((m) => (

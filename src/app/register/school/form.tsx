@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { rememberEmail } from "@/lib/remembered";
 import { Spinner } from "@/components/loading";
 import { PasswordInput } from "@/components/password-input";
 import { registerSchool, type RegisterState } from "../actions";
@@ -29,7 +30,13 @@ export function SchoolForm() {
   );
 
   return (
-    <form action={action} className="card space-y-5 p-6">
+    <form
+      action={action} className="card space-y-5 p-6"
+      onSubmit={(e) => {
+        const field = e.currentTarget.elements.namedItem("email");
+        if (field instanceof HTMLInputElement) rememberEmail(field.value);
+      }}
+    >
       <fieldset className="space-y-4">
         <legend className="overline mb-3">Школа</legend>
 

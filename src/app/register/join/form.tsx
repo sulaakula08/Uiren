@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
+import { rememberEmail } from "@/lib/remembered";
 import { Spinner } from "@/components/loading";
 import { PasswordInput } from "@/components/password-input";
 import { joinSchool, lookupSchool, type RegisterState } from "../actions";
@@ -66,7 +67,13 @@ export function JoinForm() {
   }
 
   return (
-    <form action={action} className="card space-y-5 p-6">
+    <form
+      action={action} className="card space-y-5 p-6"
+      onSubmit={(e) => {
+        const field = e.currentTarget.elements.namedItem("email");
+        if (field instanceof HTMLInputElement) rememberEmail(field.value);
+      }}
+    >
       <div>
         <label className="label" htmlFor="joinCode">
           Код школы
